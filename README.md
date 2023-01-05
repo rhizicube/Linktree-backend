@@ -1,2 +1,2 @@
 # LinkTree
-Codebase for LinkTree
+Backend Codebase for LinkTree
