@@ -93,7 +93,7 @@ async def delete(id:int=None, db:session=Depends(get_db)):
 	"""
 	try:
 		if id:
-			_profile = profiles.delete_profile(db, id)
+			_profile = profiles.delete_profile_by_id(db, id)
 			return JSONResponse(content={"message": f"Profile {id} deleted"}, status_code=status.HTTP_200_OK)
 		else:
 			deleted_rows = profiles.delete_all_profiles(db)

@@ -16,6 +16,6 @@ postgre_sessionLocal = sessionmaker(autocommit=True, autoflush=False, bind=postg
 PostgreBase = declarative_base()
 
 
-MONGO_DATABASE_URL=f"{settings.MONGO_DB_ENGINE}://{settings.MONGO_DB_USER}:{settings.MONGO_DB_PASS}@{settings.MONGO_DB_HOST}/{settings.MONGO_DB_NAME}?retryWrites=true&w=majority"
-mongo_client = MongoClient(settings.MONGO_DB_HOST, settings.MONGO_DB_PORT)
+# MONGO_DATABASE_URL=f"{settings.MONGO_DB_ENGINE}://{settings.MONGO_DB_USER}:{settings.MONGO_DB_PASS}@{settings.MONGO_DB_HOST}/{settings.MONGO_DB_NAME}?retryWrites=true&w=majority"
+# mongo_client = MongoClient(settings.MONGO_DB_HOST, settings.MONGO_DB_PORT)
 

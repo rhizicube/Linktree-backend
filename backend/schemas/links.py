@@ -11,6 +11,8 @@ class LinkSchema(BaseModel):
 	link_thumbnail: Optional[str]=None
 	link_url: str
 	link_enable:Optional[bool]=True
+	link_tiny: str
+	profile_id: int
 
 	class Config:
 		orm_mode=True

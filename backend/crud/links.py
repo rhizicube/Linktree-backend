@@ -33,7 +33,7 @@ def get_link_by_id(db:session, id:int):
 	"""
 	return db.query(Link).get(id)
 
-def get_link_by_profile(db:session, uname:str):
+def get_link_by_profile(db:session, profile_id:int):
 	"""Function to get link for the given user
 
 	Args:
@@ -43,7 +43,7 @@ def get_link_by_profile(db:session, uname:str):
 	Returns:
 		orm query set: returns the queried link
 	"""
-	return db.query(Link).filter_by(username=uname).first()
+	return db.query(Link).filter_by(profile_id=profile_id).all()
 
 def create_link(db:session, link:LinkSchema):
 	"""Function to create a link
@@ -55,7 +55,7 @@ def create_link(db:session, link:LinkSchema):
 	Returns:
 		orm query set: returns created link
 	"""
-	_link = Link(link_name=link.link_name, link_url=link.link_url, link_enable=link.link_enable, profile_id=get_profile_by_id(db, link.profile_id).username)
+	_link = Link(link_name=link.link_name, link_thumbnail=link.link_thumbnail, link_url=link.link_url, link_enable=link.link_enable, link_tiny=link.link_tiny, profile_id=link.profile_id)
 	db.add(_link)
 	db.commit()
 	db.refresh(_link)
