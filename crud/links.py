@@ -33,7 +33,7 @@ def get_link_by_id(db:session, id:int):
 	return db.query(Link).get(id)
 
 def get_link_by_profile(db:session, profile:int):
-	"""Function to get link for the given user
+	"""Function to get link for the given profile
 
 	Args:
 		db (session): DB connection session for ORM functionalities
@@ -42,7 +42,7 @@ def get_link_by_profile(db:session, profile:int):
 	Returns:
 		orm query set: returns the queried link
 	"""
-	return db.query(Link).filter_by(profile_id=profile).first()
+	return db.query(Link).filter(Link.profile_id == profile).all()
 
 def create_little_link(db:session) -> str:
 	"""Function to shorten links
@@ -151,6 +151,16 @@ def update_link(db:session, id:int, link_enable:bool=None, link_name:str=None, l
 	return _link
 
 def update_link_image(db:session, id:int, file:UploadFile=File(...)):
+	"""Function to update link's thumbnail
+
+	Args:
+		db (session): DB connection session for ORM functionalities
+		id (int): Link id, pk
+		file (UploadFile, optional): Uploaded image. Defaults to File(...).
+
+	Returns:
+		orm query set: returns updated link
+	"""
 	print(type(file))
 	_link = get_link_by_id(db, id)
 	img_path = save_uploaded_image(file)
@@ -161,3 +171,19 @@ def update_link_image(db:session, id:int, file:UploadFile=File(...)):
 	db.commit()
 	db.refresh(_link)
 	return _link
+
+def get_all_tiny_links(db:session):
+	"""Function to get all the tiny/shortened links
+
+	Args:
+		db (session): DB connection session for ORM functionalities
+
+	Returns:
+		list: returns list of tiny links
+	"""
+	urls = db.query(Link).with_entities(Link.link_tiny).all()
+	urls = [u[0] for u in urls]
+	return urls
+
+def get_profile_by_tiny_link(url:str, db:session):
+    return db.query(Link).filter_by(link_tiny=url).first().link_url

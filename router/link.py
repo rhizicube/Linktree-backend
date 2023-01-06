@@ -46,7 +46,7 @@ async def get(id:int=None, profile_id:int=None, db:session=Depends(get_db)):
 			else:
 				return JSONResponse(content={"message": f"Link {id} not found"}, status_code=status.HTTP_404_NOT_FOUND)
 		elif profile_id:
-			_link = links.get_link_by_user(db, profile_id)
+			_link = links.get_link_by_profile(db, profile_id)
 			if _link:
 				return ResponseLink(code=status.HTTP_200_OK, status="OK", result=_link, message="Success").dict(exclude_none=True)
 			else:
@@ -98,7 +98,7 @@ async def delete(id:int=None, db:session=Depends(get_db)):
 	except Exception as e:
 		return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)
 
-@link_router.put("/link/image/")
+@link_router.put("/link/thumbnail/")
 async def update_image(file:UploadFile=File(...), id:int=None, db:session=Depends(get_db)):
 	try:
 		_link = links.update_link_image(db, id, file)

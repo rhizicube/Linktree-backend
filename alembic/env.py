@@ -5,8 +5,6 @@ from sqlalchemy import pool
 
 from alembic import context
 
-# from backend.core.settings import settings
-# from main import * #User, Profile
 from core.settings import settings
 
 # this is the Alembic Config object, which provides

@@ -44,6 +44,18 @@ def get_profile_by_user(db:session, uname:str):
 	"""
 	return db.query(Profile).filter_by(username=uname).first()
 
+def get_profile_by_url(db:session, url:str):
+	"""Function to get profile for the given url
+
+	Args:
+		db (session): DB connection session for ORM functionalities
+		url (str): profile url
+
+	Returns:
+		orm query set: returns the queried profile
+	"""
+	return db.query(Profile).filter_by(profile_link=url).first()
+
 def create_profile(db:session, profile:ProfileSchema):
 	"""Function to create a profile
 

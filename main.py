@@ -2,7 +2,7 @@ from fastapi import FastAPI
 import schemas.models as models
 import uvicorn
 from db_connect.config import postgre_engine
-from router import user, profile, link, trials
+from router import user, profile, link, trials, user_profile, setting
 
 from celery_config.celery_utils import create_celery
 
@@ -30,7 +30,9 @@ def create_app() -> FastAPI:
 	current_app.include_router(user.user_router, prefix="/api/users", tags=["user"])
 	current_app.include_router(profile.profile_router, prefix="/api/profiles", tags=["profile"])
 	current_app.include_router(link.link_router, prefix="/api/links", tags=["link"])
+	current_app.include_router(setting.setting_router, prefix="/api/settings", tags=["setting"])
 	current_app.include_router(trials.router)
+	current_app.include_router(user_profile.router, tags=["Visitor"])
 	return current_app
 
 

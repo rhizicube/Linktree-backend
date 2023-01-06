@@ -10,7 +10,7 @@ class ProfileSchema(BaseModel):
 	profile_link: str
 	profile_bio: Optional[Text]=None
 	username: str
-	profile_image_path:Optional[str]=None
+	# profile_image_path:Optional[str]=None
 
 	class Config:
 		orm_mode=True

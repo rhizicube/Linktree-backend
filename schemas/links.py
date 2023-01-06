@@ -8,7 +8,7 @@ T = TypeVar('T') # Can be anything
 
 class LinkSchema(BaseModel):
 	link_name: str
-	link_thumbnail: Optional[str]=None
+	# link_thumbnail: Optional[str]=None
 	link_url: str
 	link_enable:Optional[bool]=True
 	profile: int
