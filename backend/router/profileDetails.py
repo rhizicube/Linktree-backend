@@ -39,41 +39,47 @@ async def get(username:str, db:session=Depends(get_db)):
     except Exception as e:
         return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content={"message":str(e)})
 
-# @profile_detail_router.post("/savedetails/")
-# async def create(username:str, request: Dict[Any, Any], db:session=Depends(get_db)):
-    # return {
-    #     "status" : "SUCCESS",
-    #     "data" : request
-    # }
-#     # request = await request.json()
-    # try:
-    #     if username:
-    #         if request["profile"] is not None:
-    #             request["profile"]["username"] = username
-    #             profile = ProfileSchema(**request["profile"])
-    #             _profile = profiles.create_profile(db, profile)
-    #             print(profile)
-    #         if request["link"] is not None:
-    #             for link in request["link"]:
-    #                 link["profile_id"] = _profile.id
-    #                 link["tiny_url"] = ""
-    #                 link = LinkSchema(**link)
-    #                 _link = links.create_link(db, link)
-    #                 profile(link)
-    #         if request["settings"] is not None:
-    #             request["settings"]["profile_management"] = _profile.id
-    #             setting = SettingSchema(**request["setting"])
-    #             _setting = settings.create_setting(db, setting)
-    #             print(setting)
-    #         return JSONResponse(status_code=status.HTTP_201_CREATED, content={"message":"Profile details saved"})
-    #     else:
-    #         return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content={"message":"Username is required"})
-    # except Exception as e:
-    #     return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content={"message":str(e)})
+@profile_detail_router.post("/savedetails/")
+async def create(username:str, request: Dict[Any, Any], db:session=Depends(get_db)):
+    try:
+        if username:
+            if request["profile"] is not None:
+                request["profile"]["username"] = username
+                profile = ProfileSchema(**request["profile"])
+                _profile = profiles.create_profile(db, profile)
+                print(profile)
+            if request["link"] is not None:
+                for link in request["link"]:
+                    link["profile_id"] = _profile.id
+                    link["tiny_url"] = ""
+                    link = LinkSchema(**link)
+                    _link = links.create_link(db, link)
+                    print(link)
+            if request["setting"] is not None:
+                request["setting"]["profile_management"] = _profile.id
+                setting = SettingSchema(**request["setting"])
+                _setting = settings.create_setting(db, setting)
+                print(setting)
+            return JSONResponse(status_code=status.HTTP_201_CREATED, content={"message":"Profile details saved"})
+        else:
+            return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content={"message":"Username is required"})
+    except Exception as e:
+        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content={"message":str(e)})
 
-# @profile_detail_router.post("/savedetails/")
-# async def create(username:str, request: Dict[Any, Any], db:session=Depends(get_db)):
-#     return {
-#         "status" : "SUCCESS",
-#         "data" : request
-#     }
+@profile_detail_router.put("/updatedetails/")
+async def update(username:str, link_id:int, request: Dict[Any, Any], db:session=Depends(get_db)):
+    try:
+        if username:
+            profile = profiles.get_profile_by_user(db, username)
+            if request["profile"]["profile_bio"] is not None:
+                _profile = profiles.update_profile(db, profile.id, request["profile"]["profile_bio"])
+            if request["setting"] is not None:
+                setting = settings.get_setting_by_profile(db, profile.id)
+                _setting = settings.update_setting(db, setting.id, request["setting"]["profile_social"])
+            if len(request["link"])!=0 and link_id is not None:
+                _link = links.update_link(db, link_id, request["link"][0]["link_name"], request["link"][0]["link_url"], request["link"][0]["link_thumbnail"], request["link"][0]["link_enable"])
+            return JSONResponse(status_code=status.HTTP_200_OK, content={"message":"Profile details updated"})
+        else:
+            return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content={"message":"Username is required"})
+    except Exception as e:
+        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content={"message":str(e)})

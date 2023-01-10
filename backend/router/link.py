@@ -93,7 +93,7 @@ async def delete(id:int=None, db:session=Depends(get_db)):
 	"""
 	try:
 		if id:
-			_link = links.delete_link(db, id)
+			_link = links.delete_link_by_id(db, id)
 			return JSONResponse(content={"message": f"Link {id} deleted"}, status_code=status.HTTP_200_OK)
 		else:
 			deleted_rows = links.delete_all_links(db)

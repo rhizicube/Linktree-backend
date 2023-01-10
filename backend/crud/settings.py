@@ -86,7 +86,7 @@ def delete_setting_by_id(db:session, id:int):
         raise HTTPException(status_code=404, detail="Setting not found")
 
 def update_setting(db:session, id:int, profile_social:json=None):
-    _setting = db.query(Setting).get(id)
+    _setting = get_setting_by_id(db, id)
     is_updated = False
     if profile_social is not None:
         _setting.profile_social = profile_social

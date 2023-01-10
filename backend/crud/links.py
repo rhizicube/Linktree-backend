@@ -57,6 +57,7 @@ def create_link(db:session, link:LinkSchema):
 	"""
 	_link = Link(link_name=link.link_name, link_thumbnail=link.link_thumbnail, link_url=link.link_url, link_enable=link.link_enable, link_tiny=link.link_tiny, profile_id=link.profile_id)
 	db.add(_link)
+	print(_link)
 	db.commit()
 	db.refresh(_link)
 	return _link
@@ -99,7 +100,7 @@ def delete_link_by_id(db:session, id:int):
 		db.rollback()
 		raise HTTPException(status_code=400, detail="Link not found")
 
-def update_link(db:session, id:int, bio:str=None):
+def update_link(db:session, id:int, link_name:str=None, link_url:str=None, link_thumbnail:str=None, link_enable:str=None):
 	"""Function to update link
 
 	Args:
@@ -113,8 +114,17 @@ def update_link(db:session, id:int, bio:str=None):
 	_link = get_link_by_id(db, id)
 	is_updated = False
 	
-	if bio is not None:
-		_link.link_bio = bio
+	if link_url is not None:
+		_link.link_url = link_url
+		is_updated = True
+	if link_name is not None:
+		_link.link_name = link_name
+		is_updated = True
+	if link_thumbnail is not None:
+		_link.link_thumbnail = link_thumbnail
+		is_updated = True
+	if link_enable is not None:
+		_link.link_enable = link_enable
 		is_updated = True
 	if is_updated:
 		_link.link_updated = func.now()

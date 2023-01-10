@@ -11,12 +11,12 @@ class Settings(BaseSettings):
 	POSTGRE_DB_PORT: int = 5432
 
 	# MongoDB connection
-	# MONGO_DB_ENGINE: str = "mongodb+srv"
-	# MONGO_DB_USER: str = "admin@rhizicube.ai"
-	# MONGO_DB_PASS: str = "1234"
-	# MONGO_DB_HOST: str = "localhost"
-	# MONGO_DB_NAME: str = "rhizicubedb"
-	# MONGO_DB_PORT: int = 27017
+	MONGO_DB_ENGINE: str = "mongodb+srv"
+	MONGO_DB_USER: str = "admin@rhizicube.ai"
+	MONGO_DB_PASS: str = "1234"
+	MONGO_DB_HOST: str = "localhost"
+	MONGO_DB_NAME: str = "rhizicubedb"
+	MONGO_DB_PORT: int = 27017
 
 	STATIC_URL = '/static/'
 	MEDIA_URL = '/media/'
@@ -26,3 +26,5 @@ class Settings(BaseSettings):
 	MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
 
 settings = Settings()
+
+
