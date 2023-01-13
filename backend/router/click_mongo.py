@@ -10,7 +10,7 @@ client = motor.motor_asyncio.AsyncIOMotorClient(os.environ.get(MONGO_DATABASE_UR
 db1 = client["rhizicubedb"]
 click_mongo_router = APIRouter()
 @click_mongo_router.post("/", response_description="Add new click", response_model=Clicks)
-async def create_view(click: Clicks = Body(...)):
+async def create_click(click: Clicks = Body(...)):
     click = jsonable_encoder(click)
     new_click = await db1["Clicks"].insert_one(click)
     created_click = await db1["Clicks"].find_one({"_id": new_click.inserted_id})
