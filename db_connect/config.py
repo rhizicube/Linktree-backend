@@ -3,7 +3,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.pool import QueuePool
 from core.settings import settings
-
+import urllib
 from pymongo import MongoClient
 
 
@@ -22,6 +22,8 @@ postgre_sessionLocal = sessionmaker(autocommit=True, autoflush=False, bind=postg
 PostgreBase = declarative_base()
 
 
-MONGO_DATABASE_URL=f"{settings.MONGO_DB_ENGINE}://{settings.MONGO_DB_USER}:{settings.MONGO_DB_PASS}@{settings.MONGO_DB_HOST}/{settings.MONGO_DB_NAME}?retryWrites=true&w=majority"
+MONGO_DATABASE_URL=f"{settings.MONGO_DB_ENGINE}://{urllib.parse.quote_plus(settings.MONGO_DB_USER)}:{urllib.parse.quote_plus(settings.MONGO_DB_PASS)}@{settings.MONGO_DB_HOST}/{settings.MONGO_DB_NAME}?retryWrites=true&w=majority"
 mongo_client = MongoClient(settings.MONGO_DB_HOST, settings.MONGO_DB_PORT)
+db = mongo_client["rhizicubedb"]
+
 
