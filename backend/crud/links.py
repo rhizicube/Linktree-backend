@@ -4,7 +4,7 @@ from schemas.links import LinkSchema
 from crud.profiles import get_profile_by_id
 from fastapi import HTTPException, UploadFile, File
 from sqlalchemy import func
-from settings import settings
+from core.settings import settings
 import secrets, os, shutil
 
 

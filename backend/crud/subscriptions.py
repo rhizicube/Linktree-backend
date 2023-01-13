@@ -4,7 +4,7 @@ from schemas.subscriptions import SubscriptionSchema
 from crud.users import get_user_by_username
 from fastapi import HTTPException, UploadFile, File
 from sqlalchemy import func
-from settings import settings
+from core.settings import settings
 import secrets, os, shutil
 
 

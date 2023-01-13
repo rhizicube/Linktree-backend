@@ -3,7 +3,7 @@ from models import Click
 from schemas.clicks import ClickSchema
 from fastapi import HTTPException, UploadFile, File
 from sqlalchemy import func
-from settings import settings
+from core.settings import settings
 import secrets, os, shutil
 
 def get_all_clicks(db:session, skip:int=0, limit:int=100):

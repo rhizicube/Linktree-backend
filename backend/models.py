@@ -1,5 +1,8 @@
 from sqlalchemy import Column, Integer, String, Text, DateTime, func, ForeignKey, Boolean
 from config import PostgreBase
+from pydantic import BaseModel, Field
+from typing import List, Optional
+from bson import ObjectId
 from datetime import datetime as dt
 from sqlalchemy.orm import relationship
 import json
@@ -99,3 +102,66 @@ class Click(PostgreBase):
 	link_id=Column(Integer, ForeignKey("link.id"), nullable=False, server_onupdate="CASCADE", server_ondelete="CASCADE")
 	link = relationship("Link", back_populates="clicks")
 	view = relationship("View", back_populates="clicks")
+
+
+""" All MongoDB models """
+class PyObjectId(ObjectId):
+	@classmethod
+	def __get_validators__(cls):
+		yield cls.validate
+
+	@classmethod
+	def validate(cls, v):
+		if not ObjectId.is_valid(v):
+			raise ValueError("Invalid objectid")
+		return ObjectId(v)
+
+	@classmethod
+	def __modify_schema__(cls, field_schema):
+		field_schema.update(type="string")
+
+class Views(BaseModel):
+	id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
+	profile_link: str = Field(...)
+	session_id: str = Field(...)
+	device: str = Field(...)
+	location: dict = Field(...)
+	view_created: dt = dt.utcnow()
+	
+
+	class Config:
+		allow_population_by_field_name = True
+		arbitrary_types_allowed = True
+		json_encoders = {ObjectId: str}
+
+class UpdateViews(BaseModel):
+	profile_link: Optional[str]
+	session_id: Optional[str]
+	device: Optional[str]
+	location: Optional[dict]
+	view_created: dt = dt.utcnow()
+
+	class Config:
+		arbitrary_types_allowed = True
+		json_encoders = {ObjectId: str}
+
+
+class Clicks(BaseModel):
+	id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
+	link: str = Field(...)
+	session_id: str = Field(...)
+	click_created: dt = dt.utcnow()
+	
+
+	class Config:
+		allow_population_by_field_name = True
+		arbitrary_types_allowed = True
+		json_encoders = {ObjectId: str}
+
+class UpdateClicks(BaseModel):
+	link: Optional[str]
+	session_id: Optional[str]
+
+	class Config:
+		arbitrary_types_allowed = True
+		json_encoders = {ObjectId: str}
