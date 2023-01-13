@@ -14,7 +14,7 @@ class Settings(BaseSettings):
 	POSTGRE_DB_PORT: int = 5432
 
 	# MongoDB connection
-	MONGO_DB_ENGINE: str = "mongodb+srv"
+	MONGO_DB_ENGINE: str = "mongodb"
 	MONGO_DB_USER: str = "admin@rhizicube.ai"
 	MONGO_DB_PASS: str = "cube123"
 	MONGO_DB_HOST: str = "localhost"
