@@ -5,7 +5,7 @@ from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
 from fastapi import APIRouter, Body, HTTPException, status
 from typing import List
-from config import MONGO_DATABASE_URL
+from db_connect.config import MONGO_DATABASE_URL
 client = motor.motor_asyncio.AsyncIOMotorClient(os.environ.get(MONGO_DATABASE_URL))
 db1 = client["rhizicubedb"]
 click_mongo_router = APIRouter()

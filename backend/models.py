@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, String, Text, DateTime, func, ForeignKey, Boolean
-from config import PostgreBase
+from db_connect.config import PostgreBase
 from pydantic import BaseModel, Field
 from typing import List, Optional
 from bson import ObjectId

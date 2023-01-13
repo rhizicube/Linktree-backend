@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from models import User
 from typing import List
 import models, uvicorn
-from config import postgre_engine
+from db_connect.config import postgre_engine
 from router import user, profile, link, subscription, setting, view, click, profileDetails, view_mongo, click_mongo
 from db.mongodb_utils import connect_to_mongo, close_mongo_connection
 

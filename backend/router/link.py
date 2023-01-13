@@ -7,7 +7,7 @@ from PIL import Image
 import io
 
 
-from setup import get_db
+from db_connect.setup import get_db
 
 link_router = APIRouter()
 

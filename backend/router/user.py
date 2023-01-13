@@ -4,7 +4,7 @@ from sqlalchemy.orm import session
 from schemas.users import RequestUser, ResponseUser, UpdateUser
 import crud.users as users
 
-from setup import get_db
+from db_connect.setup import get_db
 
 user_router = APIRouter()
 

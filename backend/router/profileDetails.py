@@ -11,7 +11,7 @@ from schemas.settings import SettingSchema
 from schemas.profiles import ProfileSchema
 import json
 
-from setup import get_db
+from db_connect.setup import get_db
 
 profile_detail_router = APIRouter()
 

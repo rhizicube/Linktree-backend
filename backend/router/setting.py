@@ -6,7 +6,7 @@ import crud.settings as settings
 from PIL import Image
 import io
 
-from setup import get_db
+from db_connect.setup import get_db
 setting_router = APIRouter()
 
 

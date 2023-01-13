@@ -4,7 +4,7 @@ from sqlalchemy.orm import session
 from schemas.views import RequestView, ResponseView, UpdateView
 import crud.views as views
 
-from setup import get_db
+from db_connect.setup import get_db
 
 view_router = APIRouter()
 
