@@ -4,7 +4,7 @@ from typing import List
 import models, uvicorn
 from db_connect.config import postgre_engine
 from router import user, profile, link, subscription, setting, view, click, profileDetails, view_mongo, click_mongo
-from db.mongodb_utils import connect_to_mongo, close_mongo_connection
+from db_connect.mongodb_utils import connect_to_mongo, close_mongo_connection
 
 models.PostgreBase.metadata.create_all(bind=postgre_engine)
 # mongo

@@ -6,8 +6,10 @@ from fastapi.encoders import jsonable_encoder
 from fastapi import APIRouter, Body, HTTPException, status
 from typing import List
 from db_connect.config import MONGO_DATABASE_URL
-client = motor.motor_asyncio.AsyncIOMotorClient(os.environ.get(MONGO_DATABASE_URL))
-db1 = client["rhizicubedb"]
+import db_connect.mongodb as mongodb
+from db_connect.mongodb_utils import client
+from core.settings import settings
+db1 = client[settings.MONGO_DB_NAME]
 view_mongo_router = APIRouter()
 @view_mongo_router.post("/", response_description="Add new view", response_model=Views)
 async def create_view(view: Views = Body(...)):

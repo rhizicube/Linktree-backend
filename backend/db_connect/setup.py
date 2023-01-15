@@ -1,4 +1,4 @@
-from config import postgre_sessionLocal
+from db_connect.config import postgre_sessionLocal
 
 """Connect to DB and create session, and begin transaction"""
 

@@ -6,8 +6,15 @@ from fastapi.encoders import jsonable_encoder
 from fastapi import APIRouter, Body, HTTPException, status
 from typing import List
 from db_connect.config import MONGO_DATABASE_URL
-client = motor.motor_asyncio.AsyncIOMotorClient(os.environ.get(MONGO_DATABASE_URL))
-db1 = client["rhizicubedb"]
+import db_connect.mongodb as mongodb
+from db_connect.mongodb_utils import client
+from db_connect.mongodb import db
+from core.settings import settings
+# client = mongodb_utils.connect()
+db1 = client[settings.MONGO_DB_NAME]
+# client = mongodb_utils.connect()
+# client = motor.motor_asyncio.AsyncIOMotorClient(os.environ.get(MONGO_DATABASE_URL))
+# db1 = client["rhizicubedb"]
 click_mongo_router = APIRouter()
 @click_mongo_router.post("/", response_description="Add new click", response_model=Clicks)
 async def create_click(click: Clicks = Body(...)):
