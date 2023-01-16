@@ -13,7 +13,6 @@ class SubscriptionSchema(BaseModel):
     # valid_to: Optional[datetime]=None
     subscription_description: Optional[Text]=None
     subscription_reminder: bool
-
     class Config:
         orm_mode=True
 

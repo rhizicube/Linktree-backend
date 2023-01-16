@@ -10,6 +10,7 @@ class ProfileSchema(BaseModel):
 	profile_link: str
 	profile_bio: Optional[Text]=None
 	username: str
+	subscription_id: int=None
 	profile_image_path:Optional[str]=None
 
 	class Config:

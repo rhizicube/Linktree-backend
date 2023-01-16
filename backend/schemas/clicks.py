@@ -6,7 +6,7 @@ from pydantic.generics import GenericModel
 
 T = TypeVar('T') # Can be anything
 
-class ClickSchema(BaseModel):
+class ClicksResampleSchema(BaseModel):
     click_count: int
     view_id:int
     link_id:int
@@ -14,7 +14,7 @@ class ClickSchema(BaseModel):
         orm_mode=True
 
 class RequestClick(BaseModel):
-    parameter: ClickSchema = Field(...)
+    parameter: ClicksResampleSchema = Field(...)
 
 class ResponseClick(GenericModel, Generic[T]):
     code: str
@@ -22,8 +22,8 @@ class ResponseClick(GenericModel, Generic[T]):
     message: Optional[str]=None
     result: Optional[T]=None
 
-class ClickUpdateSchema(BaseModel):
+class ClicksResampleUpdateSchema(BaseModel):
     click_count: Optional[int]=None
 
 class UpdateClick(BaseModel):
-    parameter: ClickUpdateSchema = Field(...)
+    parameter: ClicksResampleUpdateSchema = Field(...)

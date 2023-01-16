@@ -31,11 +31,12 @@ class Profile(PostgreBase):
 	profile_image_path=Column(String, nullable=True)
 	profile_created=Column(DateTime, server_default=func.now())
 	username = Column(String, ForeignKey("user.username"), nullable=False, server_onupdate="CASCADE", server_ondelete="CASCADE")
-
+	subscription_id = Column(Integer, ForeignKey("subscription.id"), nullable=True, server_onupdate="CASCADE", server_ondelete="CASCADE")
 	user = relationship("User", back_populates="profiles")
 	links = relationship("Link", back_populates="profile")
 	settings = relationship("Setting", back_populates="profile")
-	views = relationship("View", back_populates="profile")
+	views = relationship("ViewsResample", back_populates="profile")
+	subscription = relationship("Subscription", back_populates="profile")
 
 
 
@@ -53,7 +54,7 @@ class Link(PostgreBase):
 	profile_id=Column(Integer, ForeignKey("profile.id"), nullable=False, server_onupdate="CASCADE", server_ondelete="CASCADE")
 
 	profile=relationship("Profile", back_populates="links")
-	clicks = relationship("Click", back_populates="link")
+	clicks = relationship("ClicksResample", back_populates="link")
 
 
 
@@ -67,6 +68,7 @@ class Subscription(PostgreBase):
 	valid_to = Column(DateTime, nullable=True)
 	subscription_description=Column(Text, nullable=True)
 	subscription_reminder = Column(Boolean, nullable=False)
+	profile = relationship("Profile", back_populates="subscription")
 
 class Setting(PostgreBase):
 	__tablename__ = "setting"
@@ -78,7 +80,7 @@ class Setting(PostgreBase):
 	profile_management = Column(Integer, ForeignKey("profile.id"), nullable=False, server_onupdate="CASCADE", server_ondelete="CASCADE")
 	profile = relationship("Profile", back_populates="settings")
 
-class View(PostgreBase):
+class ViewsResample(PostgreBase):
 	__tablename__ = "view"
 
 	id=Column(Integer, primary_key=True, autoincrement=True)
@@ -89,10 +91,10 @@ class View(PostgreBase):
 	session_created = Column(DateTime, server_default=func.now())
 	profile_management=Column(Integer, ForeignKey("profile.id"), nullable=False, server_onupdate="CASCADE", server_ondelete="CASCADE")
 	profile = relationship("Profile", back_populates="views")
-	clicks = relationship("Click", back_populates="view")
+	clicks = relationship("ClicksResample", back_populates="view")
 
 
-class Click(PostgreBase):
+class ClicksResample(PostgreBase):
 	__tablename__ = "click"
 
 	id=Column(Integer, primary_key=True, autoincrement=True)
@@ -101,7 +103,7 @@ class Click(PostgreBase):
 	view_id=Column(Integer, ForeignKey("view.id"), nullable=False, server_onupdate="CASCADE", server_ondelete="CASCADE")
 	link_id=Column(Integer, ForeignKey("link.id"), nullable=False, server_onupdate="CASCADE", server_ondelete="CASCADE")
 	link = relationship("Link", back_populates="clicks")
-	view = relationship("View", back_populates="clicks")
+	view = relationship("ViewsResample", back_populates="clicks")
 
 
 """ All MongoDB models """

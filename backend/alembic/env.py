@@ -28,7 +28,7 @@ if config.config_file_name is not None:
 # add your model's MetaData object here
 # for 'autogenerate' support
 from models import * #User, Profile
-from config import PostgreBase
+from db_connect.config import PostgreBase
 target_metadata = PostgreBase.metadata
 # target_metadata = None
 

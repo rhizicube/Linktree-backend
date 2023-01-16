@@ -5,7 +5,7 @@ from pydantic.generics import GenericModel
 """Serialization for User data coming from requests as well as data going to responses"""
 
 T = TypeVar('T') # Can be anything
-class ViewSchema(BaseModel):
+class ViewsResampleSchema(BaseModel):
     session_id: str
     device_name: str
     view_count: int
@@ -14,7 +14,7 @@ class ViewSchema(BaseModel):
         orm_mode=True
 
 class RequestView(BaseModel):
-    parameter: ViewSchema = Field(...)
+    parameter: ViewsResampleSchema = Field(...)
 
 class ResponseView(GenericModel, Generic[T]):
     code: str
@@ -22,9 +22,9 @@ class ResponseView(GenericModel, Generic[T]):
     message: Optional[str]=None
     result: Optional[T]=None
 
-class ViewUpdateSchema(BaseModel):
+class ViewsResampleUpdateSchema(BaseModel):
     view_count: int
     device_name: str
 
 class UpdateView(BaseModel):
-    parameter: ViewSchema = Field(...)
+    parameter: ViewsResampleSchema = Field(...)

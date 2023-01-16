@@ -55,7 +55,7 @@ def create_profile(db:session, profile:ProfileSchema):
 	Returns:
 		orm query set: returns created profile
 	"""
-	_profile = Profile(profile_link=profile.profile_link, profile_bio=profile.profile_bio, username=get_user_by_username(db, profile.username).username)
+	_profile = Profile(profile_link=profile.profile_link, profile_bio=profile.profile_bio, username=get_user_by_username(db, profile.username).username, subscription_id=profile.subscription_id)
 	db.add(_profile)
 	db.commit()
 	db.refresh(_profile)
