@@ -27,6 +27,8 @@ async def create(request:RequestProfile, db:session=Depends(get_db)):
 		_profile = profiles.create_profile(db, request.parameter)
 		return JSONResponse(content={"message": f"Profile {_profile.id} created"}, status_code=status.HTTP_201_CREATED)
 	except Exception as e:
+		if "(psycopg2.errors.UniqueViolation)" in str(e):
+			return JSONResponse(content={"message": f"Profile Link already exists"}, status_code=status.HTTP_400_BAD_REQUEST)
 		return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)
 
 @profile_router.get("/profile/")
