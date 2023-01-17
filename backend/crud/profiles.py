@@ -1,5 +1,5 @@
 from sqlalchemy.orm import session
-from models import Profile
+from schemas.models import Profile
 from schemas.profiles import ProfileSchema
 from crud.users import get_user_by_username
 from fastapi import HTTPException, UploadFile, File

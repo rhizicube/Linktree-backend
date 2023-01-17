@@ -1,5 +1,5 @@
 from sqlalchemy.orm import session
-from models import User
+from schemas.models import User
 from schemas.users import UserSchema
 from fastapi import HTTPException
 from datetime import datetime as dt

@@ -1,5 +1,5 @@
 from sqlalchemy.orm import session
-from models import ViewsResample
+from schemas.models import ViewsResample
 from schemas.views import ViewsResampleSchema as ViewSchema
 from fastapi import HTTPException
 from datetime import datetime as dt

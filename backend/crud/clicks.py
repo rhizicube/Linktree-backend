@@ -1,5 +1,5 @@
 from sqlalchemy.orm import session
-from models import ClicksResample
+from schemas.models import ClicksResample
 from schemas.clicks import ClicksResampleSchema as ClickSchema
 from fastapi import HTTPException, UploadFile, File
 from sqlalchemy import func

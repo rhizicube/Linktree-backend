@@ -1,5 +1,5 @@
 from sqlalchemy.orm import session
-from models import Setting
+from schemas.models import Setting
 from schemas.settings import SettingSchema
 from fastapi import HTTPException, UploadFile, File
 from sqlalchemy import func

@@ -1,5 +1,5 @@
 from sqlalchemy.orm import session
-from models import Subscription
+from schemas.models import Subscription
 from schemas.subscriptions import SubscriptionSchema
 from crud.users import get_user_by_username
 from fastapi import HTTPException, UploadFile, File

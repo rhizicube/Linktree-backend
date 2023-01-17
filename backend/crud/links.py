@@ -1,5 +1,5 @@
 from sqlalchemy.orm import session
-from models import Link
+from schemas.models import Link
 from schemas.links import LinkSchema
 from crud.profiles import get_profile_by_id
 from fastapi import HTTPException, UploadFile, File
