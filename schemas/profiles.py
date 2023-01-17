@@ -7,6 +7,7 @@ from pydantic.generics import GenericModel
 T = TypeVar('T') # Can be anything
 
 class ProfileSchema(BaseModel):
+	profile_name: str
 	profile_link: str
 	profile_bio: Optional[Text]=None
 	username: str
@@ -25,6 +26,8 @@ class ResponseProfile(GenericModel, Generic[T]):
 	result: Optional[T]=None
 
 class ProfileUpdateSchema(BaseModel):
+	profile_name: str
+	profile_link: str
 	profile_bio: Optional[str]=None
 
 class UpdateProfile(BaseModel):

@@ -11,14 +11,14 @@ link_router = APIRouter()
 
 @link_router.post("/link/")
 async def create(request:RequestLink, db:session=Depends(get_db)):
-	"""Async function to create link
+	"""API to create link
 
 	Args:
 		request (RequestLink): Serialized request data
 		db (session, optional): DB connection session for db functionalities. Defaults to Depends(get_db).
 
 	Returns:
-		JSONResponse: Link created with 200 status if link is created, else exception text with 400 status
+		JSONResponse: Link created with 201 status if link is created, else exception text with 400 status
 	"""
 	try:
 		_link = links.create_link(db, request.parameter)
@@ -28,7 +28,7 @@ async def create(request:RequestLink, db:session=Depends(get_db)):
 
 @link_router.get("/link/")
 async def get(id:int=None, profile_id:int=None, db:session=Depends(get_db)):
-	"""Async function to get link
+	"""API to get link
 
 	Args:
 		id (int, optional): Link id, pk. Defaults to None.
@@ -60,7 +60,7 @@ async def get(id:int=None, profile_id:int=None, db:session=Depends(get_db)):
 
 @link_router.put("/link/")
 async def update(request:UpdateLink, id:int=None, db:session=Depends(get_db)):
-	"""Async function to update link
+	"""API to update link
 
 	Args:
 		request (UpdateLink): Serialized request data
@@ -79,7 +79,7 @@ async def update(request:UpdateLink, id:int=None, db:session=Depends(get_db)):
 
 @link_router.delete("/link/")
 async def delete(id:int=None, db:session=Depends(get_db)):
-	"""Async function to delete link
+	"""API to delete link
 
 	Args:
 		id (int, optional): link id, pk. Defaults to None.
@@ -100,6 +100,16 @@ async def delete(id:int=None, db:session=Depends(get_db)):
 
 @link_router.put("/link/thumbnail/")
 async def update_image(file:UploadFile=File(...), id:int=None, db:session=Depends(get_db)):
+	"""API to update link with thumbnail
+
+	Args:
+		file (UploadFile, optional): Link thumbnail. Defaults to File(...).
+		id (int, optional): Link id, pk. Defaults to None.
+		db (session, optional): _description_. Defaults to Depends(get_db).
+
+	Returns:
+		JSONResponse: Link updated with 200 status if link is updated, else exception text with 400 status
+	"""
 	try:
 		_link = links.update_link_image(db, id, file)
 		return JSONResponse(content={"message": f"Link {id} updated"}, status_code=status.HTTP_200_OK)

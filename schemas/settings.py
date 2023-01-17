@@ -1,7 +1,6 @@
-from typing import Optional, Generic, TypeVar, Text
+from typing import Optional, Generic, TypeVar
 from pydantic import BaseModel, Field
 from pydantic.generics import GenericModel
-import json
 
 """Serialization for Setting data coming from requests as well as data going to responses"""
 

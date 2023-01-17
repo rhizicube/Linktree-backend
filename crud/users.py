@@ -2,7 +2,6 @@ from sqlalchemy.orm import session
 from schemas.models import User
 from schemas.users import UserSchema
 from fastapi import HTTPException
-from sqlalchemy import func
 
 
 def get_all_users(db:session, skip:int=0, limit:int=100):

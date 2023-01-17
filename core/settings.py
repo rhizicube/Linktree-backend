@@ -7,28 +7,32 @@ from celery.schedules import crontab
 class Settings(BaseSettings):
 	# PostgreSQL connection
 	POSTGRE_DB_ENGINE: str = "postgresql"
-	POSTGRE_DB_USER: str = "rhizicube@rhizicube.ai"
-	POSTGRE_DB_PASS: str = "cube123"
+	POSTGRE_DB_USER: str = "admin@rhizicube.ai"
+	POSTGRE_DB_PASS: str = "1234"
 	POSTGRE_DB_HOST: str = "localhost"
-	POSTGRE_DB_NAME: str = "fastapi_trials"
+	POSTGRE_DB_NAME: str = "linktree_db"
 	POSTGRE_DB_PORT: int = 5432
 
 	# MongoDB connection
 	MONGO_DB_ENGINE: str = "mongodb"
 	MONGO_DB_USER: str = "admin@rhizicube.ai"
-	MONGO_DB_PASS: str = "cube123"
+	MONGO_DB_PASS: str = "1234"
 	MONGO_DB_HOST: str = "localhost"
-	MONGO_DB_NAME: str = "fastapi_trials"
+	MONGO_DB_NAME: str = "linktree_db"
 	MONGO_DB_PORT: int = 27017
 
 	# Base directory
-	BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+	BASE_DIR: str = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 	# Static and media URLs
-	STATIC_URL = '/static/'
-	MEDIA_URL = '/media/'
-	STATIC_ROOT = os.path.join(BASE_DIR, 'static/')
-	MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
+	STATIC_URL: str = '/static/'
+	MEDIA_URL: str = '/media/'
+	STATIC_ROOT: str = os.path.join(BASE_DIR, 'static/')
+	MEDIA_ROOT: str = os.path.join(BASE_DIR, 'media/')
+
+	# Path to file containing location details based on IP
+	IPv4_LOCATION_FILE_PATH: str = os.path.join(BASE_DIR, 'ip2_locations', "IP2LOCATION-LITE-DB5.BIN")
+	IPv6_LOCATION_FILE_PATH: str = os.path.join(BASE_DIR, 'ip2_locations', "IP2LOCATION-LITE-DB9.IPV6.BIN")
 
 	# Celery setup
 	AMQP_USER: str = "rhizicube-admin"

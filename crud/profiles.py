@@ -20,6 +20,7 @@ def get_all_profiles(db:session, skip:int=0, limit:int=100):
 	"""
 	return db.query(Profile).offset(skip).limit(limit).all()
 
+
 def get_profile_by_id(db:session, id:int):
 	"""Function to get profile for the given pk
 
@@ -31,6 +32,7 @@ def get_profile_by_id(db:session, id:int):
 		orm query set: returns the queried profile
 	"""
 	return db.query(Profile).get(id)
+
 
 def get_profile_by_user(db:session, uname:str):
 	"""Function to get profile for the given user
@@ -44,6 +46,7 @@ def get_profile_by_user(db:session, uname:str):
 	"""
 	return db.query(Profile).filter_by(username=uname).first()
 
+
 def get_profile_by_url(db:session, url:str):
 	"""Function to get profile for the given url
 
@@ -56,6 +59,7 @@ def get_profile_by_url(db:session, url:str):
 	"""
 	return db.query(Profile).filter_by(profile_link=url).first()
 
+
 def create_profile(db:session, profile:ProfileSchema):
 	"""Function to create a profile
 
@@ -66,11 +70,12 @@ def create_profile(db:session, profile:ProfileSchema):
 	Returns:
 		orm query set: returns created profile
 	"""
-	_profile = Profile(profile_link=profile.profile_link, profile_bio=profile.profile_bio, username=get_user_by_username(db, profile.username).username)
+	_profile = Profile(profile_name=profile.profile_name, profile_link=profile.profile_link, profile_bio=profile.profile_bio, username=get_user_by_username(db, profile.username).username)
 	db.add(_profile)
 	db.commit()
 	db.refresh(_profile)
 	return _profile
+
 
 def delete_all_profiles(db:session):
 	"""Function to delete profiles
@@ -91,6 +96,7 @@ def delete_all_profiles(db:session):
 		return deleted_rows
 	except Exception as e:
 		db.rollback()
+
 
 def delete_profile_by_id(db:session, id:int):
 	"""Function to delete profile
@@ -115,7 +121,8 @@ def delete_profile_by_id(db:session, id:int):
 		db.rollback()
 		raise HTTPException(status_code=400, detail="Profile not found")
 
-def update_profile(db:session, id:int, bio:str=None):
+
+def update_profile(db:session, id:int, bio:str=None, name:str=None, url:str=None):
 	"""Function to update profile
 
 	Args:
@@ -130,10 +137,15 @@ def update_profile(db:session, id:int, bio:str=None):
 	
 	if bio is not None:
 		_profile.profile_bio = bio
+	if name is not None:
+		_profile.profile_name = name
+	if url is not None:
+		_profile.profile_link = url
 	
 	db.commit()
 	db.refresh(_profile)
 	return _profile
+
 
 def update_profile_image(db:session, id:int, file:UploadFile=File(...)):
 	"""Function to update profile image on DB

@@ -20,6 +20,7 @@ def get_all_links(db:session, skip:int=0, limit:int=100):
 	"""
 	return db.query(Link).offset(skip).limit(limit).all()
 
+
 def get_link_by_id(db:session, id:int):
 	"""Function to get link for the given pk
 
@@ -31,6 +32,7 @@ def get_link_by_id(db:session, id:int):
 		orm query set: returns the queried link
 	"""
 	return db.query(Link).get(id)
+
 
 def get_link_by_profile(db:session, profile:int):
 	"""Function to get link for the given profile
@@ -44,6 +46,7 @@ def get_link_by_profile(db:session, profile:int):
 	"""
 	return db.query(Link).filter(Link.profile_id == profile).all()
 
+
 def create_little_link(db:session) -> str:
 	"""Function to shorten links
 
@@ -53,12 +56,9 @@ def create_little_link(db:session) -> str:
 	Returns:
 		str: Short url
 	"""
-	# type_tiny = pyshorteners.Shortener()
-	# short_url = type_tiny.tinyurl.short(long_link)
- 
 	# Generate a random string of 10 characters
 	short_url_length = 10
-	all_tiny_links = db.query(Link).with_entities(Link.link_tiny).all()
+	all_tiny_links = [t[0] for t in db.query(Link).with_entities(Link.link_tiny).all()]
 	while True:
 		res = ''.join(secrets.choice(string.ascii_uppercase + string.digits) for i in range(short_url_length))
 		if str(res) not in all_tiny_links:
@@ -66,6 +66,7 @@ def create_little_link(db:session) -> str:
 	# Convert the url to string
 	short_url = str(res)
 	return short_url
+
 
 def create_link(db:session, link:LinkSchema):
 	"""Function to create a link
@@ -77,13 +78,13 @@ def create_link(db:session, link:LinkSchema):
 	Returns:
 		orm query set: returns created link
 	"""
-	
 	short_url = create_little_link(db)
 	_link = Link(link_name=link.link_name, link_url=link.link_url, link_enable=link.link_enable, link_tiny=short_url, profile_id=get_profile_by_id(db, link.profile).id)
 	db.add(_link)
 	db.commit()
 	db.refresh(_link)
 	return _link
+
 
 def delete_all_links(db:session):
 	"""Function to delete links
@@ -100,6 +101,7 @@ def delete_all_links(db:session):
 		return deleted_rows
 	except Exception as e:
 		db.rollback()
+
 
 def delete_link_by_id(db:session, id:int):
 	"""Function to delete link
@@ -122,6 +124,7 @@ def delete_link_by_id(db:session, id:int):
 	else:
 		db.rollback()
 		raise HTTPException(status_code=400, detail="Link not found")
+
 
 def update_link(db:session, id:int, link_enable:bool=None, link_name:str=None, link_url:str=None):
 	"""Function to update link
@@ -150,6 +153,7 @@ def update_link(db:session, id:int, link_enable:bool=None, link_name:str=None, l
 	db.refresh(_link)
 	return _link
 
+
 def update_link_image(db:session, id:int, file:UploadFile=File(...)):
 	"""Function to update link's thumbnail
 
@@ -172,6 +176,7 @@ def update_link_image(db:session, id:int, file:UploadFile=File(...)):
 	db.refresh(_link)
 	return _link
 
+
 def get_all_tiny_links(db:session):
 	"""Function to get all the tiny/shortened links
 
@@ -185,5 +190,15 @@ def get_all_tiny_links(db:session):
 	urls = [u[0] for u in urls]
 	return urls
 
-def get_profile_by_tiny_link(url:str, db:session):
-    return db.query(Link).filter_by(link_tiny=url).first().link_url
+
+def get_link_by_tiny_url(url:str, db:session):
+	"""Function to get original url by tiny url
+
+	Args:
+		url (str): tiny url
+		db (session):  DB connection session for ORM functionalities
+
+	Returns:
+		str: Original url inserted by user
+	"""
+	return db.query(Link).filter_by(link_tiny=url).first().link_url
