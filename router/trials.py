@@ -1,9 +1,7 @@
-from celery import group
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 
 from tasks.clicks import celery_trials
-from celery_config.celery_utils import get_task_info
 
 from core.constants import is_celery_working
 

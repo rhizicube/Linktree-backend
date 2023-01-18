@@ -1,4 +1,4 @@
-from typing import List, Optional, Generic, TypeVar
+from typing import Optional, Generic, TypeVar
 from pydantic import BaseModel, Field
 from pydantic.generics import GenericModel
 
@@ -11,7 +11,6 @@ class UserSchema(BaseModel):
 	first_name: Optional[str]=None
 	last_name: Optional[str]=None
 	email_id: str
-	profiles: Optional[List]=None
 
 	class Config:
 		orm_mode=True

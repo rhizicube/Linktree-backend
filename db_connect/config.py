@@ -3,12 +3,13 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.pool import QueuePool
 from core.settings import settings
+import urllib
 
-from pymongo import MongoClient
+import motor.motor_asyncio
 
 
 
-"""To configure connection to DB"""
+"""To configure connection to PostgreSQL DB"""
 
 POSTGRE_DATABASE_URL = f"{settings.POSTGRE_DB_ENGINE}://{settings.POSTGRE_DB_USER}:{settings.POSTGRE_DB_PASS}@{settings.POSTGRE_DB_HOST}:{settings.POSTGRE_DB_PORT}/{settings.POSTGRE_DB_NAME}"
 
@@ -22,6 +23,13 @@ postgre_sessionLocal = sessionmaker(autocommit=True, autoflush=False, bind=postg
 PostgreBase = declarative_base()
 
 
-MONGO_DATABASE_URL=f"{settings.MONGO_DB_ENGINE}://{settings.MONGO_DB_USER}:{settings.MONGO_DB_PASS}@{settings.MONGO_DB_HOST}/{settings.MONGO_DB_NAME}?retryWrites=true&w=majority"
-mongo_client = MongoClient(settings.MONGO_DB_HOST, settings.MONGO_DB_PORT)
 
+"""To configure connection to PostgreSQL DB"""
+
+MONGO_DATABASE_URL=f"{settings.MONGO_DB_ENGINE}://{urllib.parse.quote_plus(settings.MONGO_DB_USER)}:{urllib.parse.quote_plus(settings.MONGO_DB_PASS)}@{settings.MONGO_DB_HOST}/{settings.MONGO_DB_NAME}?retryWrites=true&w=majority"
+
+class MongoDataBase:
+    client: motor.motor_asyncio.AsyncIOMotorClient = None
+    database: motor.motor_asyncio.AsyncIOMotorDatabase = None
+
+mongoDB = MongoDataBase()

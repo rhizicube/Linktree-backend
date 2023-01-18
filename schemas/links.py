@@ -1,4 +1,4 @@
-from typing import Optional, Generic, TypeVar, Text
+from typing import Optional, Generic, TypeVar
 from pydantic import BaseModel, Field
 from pydantic.generics import GenericModel
 
@@ -8,7 +8,6 @@ T = TypeVar('T') # Can be anything
 
 class LinkSchema(BaseModel):
 	link_name: str
-	link_thumbnail: Optional[str]=None
 	link_url: str
 	link_enable:Optional[bool]=True
 	profile: int
@@ -29,7 +28,6 @@ class LinkUpdateSchema(BaseModel):
 	link_name: Optional[str]=None
 	link_url: Optional[str]=None
 	link_enable: Optional[bool]=None
-	link_thumbnail: Optional[str]=None
 
 class UpdateLink(BaseModel):
 	parameter: LinkUpdateSchema = Field(...)

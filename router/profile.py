@@ -12,7 +12,7 @@ profile_router = APIRouter()
 
 @profile_router.post("/profile/")
 async def create(request:RequestProfile, db:session=Depends(get_db)):
-	"""Async function to create profile
+	"""API to create profile
 
 	Args:
 		request (RequestProfile): Serialized request data
@@ -29,7 +29,7 @@ async def create(request:RequestProfile, db:session=Depends(get_db)):
 
 @profile_router.get("/profile/")
 async def get(id:int=None, username:str=None, db:session=Depends(get_db)):
-	"""Async function to get profile
+	"""API to get profile
 
 	Args:
 		id (int, optional): Profile id, pk. Defaults to None.
@@ -61,7 +61,7 @@ async def get(id:int=None, username:str=None, db:session=Depends(get_db)):
 
 @profile_router.put("/profile/")
 async def update(request:UpdateProfile, id:int=None, db:session=Depends(get_db)):
-	"""Async function to update profile
+	"""API to update profile
 
 	Args:
 		request (UpdateProfile): Serialized request data
@@ -72,7 +72,7 @@ async def update(request:UpdateProfile, id:int=None, db:session=Depends(get_db))
 		JSONResponse: Profile updated with 200 status if profile is updated, else exception text with 400 status
 	"""
 	try:
-		_profile = profiles.update_profile(db, id, request.parameter.profile_bio)
+		_profile = profiles.update_profile(db, id, request.parameter.profile_bio, request.parameter.profile_name, request.parameter.profile_link)
 		return JSONResponse(content={"message": f"Profile {id} updated"}, status_code=status.HTTP_200_OK)
 	except Exception as e:
 		return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)
@@ -80,7 +80,7 @@ async def update(request:UpdateProfile, id:int=None, db:session=Depends(get_db))
 
 @profile_router.delete("/profile/")
 async def delete(id:int=None, db:session=Depends(get_db)):
-	"""Async function to delete profile
+	"""API to delete profile
 
 	Args:
 		id (int, optional): profile id, pk. Defaults to None.
@@ -101,6 +101,16 @@ async def delete(id:int=None, db:session=Depends(get_db)):
 
 @profile_router.put("/profile/image/")
 async def update_image(file:UploadFile=File(...), id:int=None, db:session=Depends(get_db)):
+	"""API to update profile image
+
+	Args:
+		file (UploadFile, optional): Uploaded image. Defaults to File(...).
+		id (int, optional): profile id, pk. Defaults to None.
+		db (session, optional): DB connection session for db functionalities. Defaults to Depends(get_db).
+
+	Returns:
+		JSONResponse: Profile updated with 200 status if profile is updated, else exception text with 400 status
+	"""
 	try:
 		_profile = profiles.update_profile_image(db, id, file)
 		return JSONResponse(content={"message": f"Profile {id} updated"}, status_code=status.HTTP_200_OK)
