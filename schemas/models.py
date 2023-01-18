@@ -1,16 +1,12 @@
 from sqlalchemy import Column, Integer, String, Text, DateTime, func, ForeignKey, Boolean
 from db_connect.config import PostgreBase
+from pydantic import BaseModel, Field
+from typing import Optional
+from bson import ObjectId
+from datetime import datetime as dt
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import JSON
 
-from pydantic import BaseModel, Field
-from bson import ObjectId
-from typing import Optional
-from datetime import datetime as dt
-
-
-
-""" All PostgreSQL models """
 
 class User(PostgreBase):
 	__tablename__ = "user"
@@ -34,10 +30,14 @@ class Profile(PostgreBase):
 	profile_image_path=Column(String, nullable=True)
 	profile_created=Column(DateTime, server_default=func.now())
 	username = Column(String, ForeignKey("user.username"), nullable=False, server_onupdate="CASCADE", server_ondelete="CASCADE")
-
-	user = relationship("User", back_populates="profiles")
+	subscription_id = Column(Integer, ForeignKey("subscription.id"), nullable=True, server_onupdate="CASCADE", server_ondelete="CASCADE")
+	user = relationship("User", back_populates="profile")
 	links = relationship("Link", back_populates="profile")
 	settings = relationship("Setting", back_populates="profile")
+	views = relationship("ViewsResample", back_populates="profile")
+	subscription = relationship("Subscription", back_populates="profile")
+
+
 
 
 class Link(PostgreBase):
@@ -61,23 +61,37 @@ class Setting(PostgreBase):
 	id=Column(Integer, primary_key=True, autoincrement=True)
 	# payment_option=Column(String, nullable=False)
 	# profile_subscribe=Column(Boolean, nullable=False)
-	profile_social=Column(JSON, nullable=True)
-	profile_id=Column(Integer, ForeignKey("profile.id"), nullable=False, server_onupdate="CASCADE", server_ondelete="CASCADE")
-	
+	profile_social = Column(JSON, nullable=True)
+	profile_id = Column(Integer, ForeignKey("profile.id"), nullable=False, server_onupdate="CASCADE", server_ondelete="CASCADE")
 	profile = relationship("Profile", back_populates="settings")
 
+class ViewsResample(PostgreBase):
+	__tablename__ = "viewresample"
+
+	id=Column(Integer, primary_key=True, autoincrement=True)
+	session_id=Column(String, nullable=False)
+	device_name=Column(String, nullable=False)
+	view_count = Column(Integer, nullable=False)
+	view_location = Column(String, nullable=True)
+	session_created = Column(DateTime, server_default=func.now())
+	profile_id=Column(Integer, ForeignKey("profile.id"), nullable=False, server_onupdate="CASCADE", server_ondelete="CASCADE")
+	profile = relationship("Profile", back_populates="viewresample")
+	clicks = relationship("ClicksResample", back_populates="viewresample")
 
 
+class ClicksResample(PostgreBase):
+	__tablename__ = "clickresample"
 
-
-
-
-
-
+	id=Column(Integer, primary_key=True, autoincrement=True)
+	click_count=Column(Integer, nullable=False)
+	click_created=Column(DateTime, server_default=func.now())
+	view_id=Column(Integer, ForeignKey("view.id"), nullable=False, server_onupdate="CASCADE", server_ondelete="CASCADE")
+	link_id=Column(Integer, ForeignKey("link.id"), nullable=False, server_onupdate="CASCADE", server_ondelete="CASCADE")
+	link = relationship("Link", back_populates="clickresample")
+	view = relationship("ViewsResample", back_populates="clickresample")
 
 
 """ All MongoDB models """
-
 class PyObjectId(ObjectId):
 	@classmethod
 	def __get_validators__(cls):
@@ -107,7 +121,6 @@ class Views(BaseModel):
 		arbitrary_types_allowed = True
 		json_encoders = {ObjectId: str}
 
-
 class UpdateViews(BaseModel):
 	profile_link: Optional[str]
 	session_id: Optional[str]
@@ -118,7 +131,6 @@ class UpdateViews(BaseModel):
 	class Config:
 		arbitrary_types_allowed = True
 		json_encoders = {ObjectId: str}
-
 
 
 class Clicks(BaseModel):

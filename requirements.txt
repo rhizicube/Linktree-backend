@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 alembic==1.9.1
 amqp==2.6.1
 anyio==3.6.2
@@ -64,3 +65,6 @@ Wand==0.6.10
 watchfiles==0.18.1
 wcwidth==0.2.5
 websockets==10.4
+=======
+motor==3.1.1
+>>>>>>> origin/develop-backend

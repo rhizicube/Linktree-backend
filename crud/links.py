@@ -20,7 +20,6 @@ def get_all_links(db:session, skip:int=0, limit:int=100):
 	"""
 	return db.query(Link).offset(skip).limit(limit).all()
 
-
 def get_link_by_id(db:session, id:int):
 	"""Function to get link for the given pk
 
@@ -85,7 +84,6 @@ def create_link(db:session, link:LinkSchema):
 	db.refresh(_link)
 	return _link
 
-
 def delete_all_links(db:session):
 	"""Function to delete links
 
@@ -101,7 +99,6 @@ def delete_all_links(db:session):
 		return deleted_rows
 	except Exception as e:
 		db.rollback()
-
 
 def delete_link_by_id(db:session, id:int):
 	"""Function to delete link

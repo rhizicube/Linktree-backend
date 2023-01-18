@@ -1,8 +1,8 @@
-"""Changed table name
+"""Add sub to profile
 
-Revision ID: 01708c0c62aa
-Revises: 2a9e02bf0c2b
-Create Date: 2023-01-16 12:09:31.639566
+Revision ID: e6ca496c3553
+Revises: 0439a04baca4
+Create Date: 2023-01-16 12:32:42.890799
 
 """
 from alembic import op
@@ -10,8 +10,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '01708c0c62aa'
-down_revision = '2a9e02bf0c2b'
+revision = 'e6ca496c3553'
+down_revision = '0439a04baca4'
 branch_labels = None
 depends_on = None
 

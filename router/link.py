@@ -3,8 +3,9 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.orm import session
 from schemas.links import RequestLink, ResponseLink, UpdateLink
 import crud.links as links
-from db_connect.setup import get_db
 
+
+from db_connect.setup import get_db
 
 link_router = APIRouter()
 
@@ -24,6 +25,8 @@ async def create(request:RequestLink, db:session=Depends(get_db)):
 		_link = links.create_link(db, request.parameter)
 		return JSONResponse(content={"message": f"Link {_link.id} created"}, status_code=status.HTTP_201_CREATED)
 	except Exception as e:
+		if "(psycopg2.errors.UniqueViolation)" in str(e):
+			return JSONResponse(content={"message": f"Link URL already exists"}, status_code=status.HTTP_400_BAD_REQUEST)
 		return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)
 
 @link_router.get("/link/")
@@ -90,7 +93,7 @@ async def delete(id:int=None, db:session=Depends(get_db)):
 	"""
 	try:
 		if id:
-			_link = links.delete_link(db, id)
+			_link = links.delete_link_by_id(db, id)
 			return JSONResponse(content={"message": f"Link {id} deleted"}, status_code=status.HTTP_200_OK)
 		else:
 			deleted_rows = links.delete_all_links(db)

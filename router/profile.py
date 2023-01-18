@@ -25,6 +25,8 @@ async def create(request:RequestProfile, db:session=Depends(get_db)):
 		_profile = profiles.create_profile(db, request.parameter)
 		return JSONResponse(content={"message": f"Profile {_profile.id} created"}, status_code=status.HTTP_201_CREATED)
 	except Exception as e:
+		if "(psycopg2.errors.UniqueViolation)" in str(e):
+			return JSONResponse(content={"message": f"Profile Link already exists"}, status_code=status.HTTP_400_BAD_REQUEST)
 		return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)
 
 @profile_router.get("/profile/")
@@ -91,7 +93,7 @@ async def delete(id:int=None, db:session=Depends(get_db)):
 	"""
 	try:
 		if id:
-			_profile = profiles.delete_profile(db, id)
+			_profile = profiles.delete_profile_by_id(db, id)
 			return JSONResponse(content={"message": f"Profile {id} deleted"}, status_code=status.HTTP_200_OK)
 		else:
 			deleted_rows = profiles.delete_all_profiles(db)
