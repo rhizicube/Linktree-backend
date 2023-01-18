@@ -2,7 +2,6 @@ from sqlalchemy.orm import session
 from schemas.models import User
 from schemas.users import UserSchema
 from fastapi import HTTPException
-from datetime import datetime as dt
 from sqlalchemy import func
 
 

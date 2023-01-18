@@ -3,7 +3,7 @@ from schemas.models import User
 from typing import List
 import schemas.models, uvicorn
 from db_connect.config import postgre_engine
-from router import user, profile, link, subscription, setting, view, click, profileDetails, view_mongo, click_mongo
+from router import click_resample, user, profile, link, subscription, setting, profileDetails, view, view_resample
 from db_connect.mongodb_utils import connect_to_mongo, close_mongo_connection
 
 schemas.models.PostgreBase.metadata.create_all(bind=postgre_engine)
@@ -16,11 +16,11 @@ app.include_router(profile.profile_router, prefix="/api/profiles", tags=["profil
 app.include_router(link.link_router, prefix="/api/links", tags=["link"])
 app.include_router(subscription.subscription_router, prefix="/api/subscriptions", tags=["subscription"])
 app.include_router(setting.setting_router, prefix="/api/settings", tags=["setting"])
-app.include_router(view.view_router, prefix="/api/views", tags=["view"])
-app.include_router(click.click_router, prefix="/api/clicks", tags=["click"])
+app.include_router(view_resample.view_router, prefix="/api/viewsresample", tags=["viewresample"])
+app.include_router(click_resample.click_router, prefix="/api/clicksresample", tags=["clickresample"])
 app.include_router(profileDetails.profile_detail_router, prefix="/api/profile", tags=["profiledetails"])
-app.include_router(view_mongo.view_mongo_router, prefix="/api/viewmongo", tags=["viewmongo"])
-app.include_router(click_mongo.click_mongo_router, prefix="/api/clickmongo", tags=["clickmongo"])
+app.include_router(view_resample.view_router, prefix="/api/view", tags=["view"])
+app.include_router(click_resample.click_router, prefix="/api/click", tags=["click"])
 
 
 

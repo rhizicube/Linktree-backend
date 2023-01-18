@@ -1,76 +1,61 @@
-from fastapi import APIRouter, Depends, status, UploadFile, File
+from schemas.models import Clicks, UpdateClicks
 from fastapi.responses import JSONResponse
-from sqlalchemy.orm import session
-from schemas.clicks import RequestClick, ResponseClick, UpdateClick
-import crud.clicks as clicks
-from PIL import Image
-import io
+from fastapi.encoders import jsonable_encoder
+from fastapi import APIRouter, Body, HTTPException, status
+from db_connect.mongodb_utils import client
+from core.settings import settings
+# client = mongodb_utils.connect()
+db1 = client[settings.MONGO_DB_NAME]
+# client = mongodb_utils.connect()
+# client = motor.motor_asyncio.AsyncIOMotorClient(os.environ.get(MONGO_DATABASE_URL))
+# db1 = client["rhizicubedb"]
+click_mongo_router = APIRouter()
+@click_mongo_router.post("/", response_description="Add new click", response_model=Clicks)
+async def create_click(click: Clicks = Body(...)):
+    click = jsonable_encoder(click)
+    new_click = await db1["Clicks"].insert_one(click)
+    created_click = await db1["Clicks"].find_one({"_id": new_click.inserted_id})
+    return JSONResponse(status_code=status.HTTP_201_CREATED, content=created_click)
+
+@click_mongo_router.get('/clicks')
+async def list_Clicks(id: str=None):
+    if id is not None:
+        if (click := await db1["Clicks"].find_one({"_id": id})) is not None:
+            return click
+        raise HTTPException(status_code=404, detail=f"Click {id} not found")
+    else:
+        Clicks = await db1["Clicks"].find().to_list(1000)
+        return {'Clicks': Clicks}
 
 
-from db_connect.setup import get_db
+@click_mongo_router.put("/{id}", response_description="Update a click", response_model=Clicks)
+async def update_click(id: str, click: UpdateClicks = Body(...)):
+    click = {k: v for k, v in click.dict().items() if v is not None}
 
-click_router = APIRouter()
+    if len(click) >= 1:
+        update_result = await db1["Clicks"].update_one({"_id": id}, {"$set": click})
 
-@click_router.post("/click/")
-async def create(request:RequestClick, db:session=Depends(get_db)):
-    """Async function to create click
+        if update_result.modified_count == 1:
+            if (
+                updated_click := await db1["Clicks"].find_one({"_id": id})
+            ) is not None:
+                return updated_click
 
-    Args:
-        request (RequestClick): Serialized request data
-        db (session, optional): DB connection session for db functionalities. Defaults to Depends(get_db).
+    if (existing_click := await db1["Clicks"].find_one({"_id": id})) is not None:
+        return existing_click
 
-    Returns:
-        JSONResponse: Click created with 200 status if click is created, else exception text with 400 status
-    """
-    try:
-        _click = clicks.create_click(db, request.parameter)
-        return JSONResponse(content={"message": f"Click {_click.id} created"}, status_code=status.HTTP_201_CREATED)
-    except Exception as e:
-        return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)
+    raise HTTPException(status_code=404, detail=f"Click {id} not found")
 
-@click_router.get("/click/")
-async def get(id:int=None, link_id:int=None, view_id:int=None, db:session=Depends(get_db)):
-    try:
-        if id:
-            _click = clicks.get_click_by_id(db=db, id=id)
-            if _click:
-                return ResponseClick(code=status.HTTP_200_OK, status="OK", result=_click, message="Success").dict(exclude_none=True)
-            else:
-                return JSONResponse(content={"message": f"Click {id} not found"}, status_code=status.HTTP_404_NOT_FOUND)
-        elif link_id:
-            _click = clicks.get_click_by_link_id(db=db, link_id=link_id)
-            if _click:
-                return ResponseClick(code=status.HTTP_200_OK, status="OK", result=_click, message="Success").dict(exclude_none=True)
-            else:
-                return JSONResponse(content={"message": f"Click {link_id} not found"}, status_code=status.HTTP_404_NOT_FOUND)
-        elif view_id:
-            _click = clicks.get_click_by_view_id(db=db, view_id=view_id)
-            if _click:
-                return ResponseClick(code=status.HTTP_200_OK, status="OK", result=_click, message="Success").dict(exclude_none=True)
-            else:
-                return JSONResponse(content={"message": f"Click {view_id} not found"}, status_code=status.HTTP_404_NOT_FOUND)
-        else:
-            _click = clicks.get_all_clicks(db=db)
-            return ResponseClick(code=status.HTTP_200_OK, status="OK", result=_click, message="Success").dict(exclude_none=True)
-    except Exception as e:
-        return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)
 
-@click_router.put("/click/")
-async def update(id:int, request:UpdateClick, db:session=Depends(get_db)):
-    try:
-        _click = clicks.update_click(db=db, id=id, request=request)
-        return JSONResponse(content={"message": f"Click {id} updated"}, status_code=status.HTTP_200_OK)
-    except Exception as e:
-        return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)
+@click_mongo_router.delete("/{id}", response_description="Delete a click")
+async def delete_click(id: str):
+    if (existing_click := await db1["Clicks"].find_one({"_id": id})) is not None:
+        delete_result = await db1["Clicks"].delete_one({"_id": id})
+        return JSONResponse(status_code=status.HTTP_204_NO_CONTENT, content="Click deleted")
+    raise HTTPException(status_code=404, detail=f"Click {id} not found")
 
-@click_router.delete("/click/")
-async def delete(id:int=None, db:session=Depends(get_db)):
-    try:
-        if id:
-            _click = clicks.delete_click(db=db, id=id)
-            return JSONResponse(content={"message": f"Click {id} deleted"}, status_code=status.HTTP_200_OK)
-        else:
-            deleted_rows = clicks.delete_all_clicks(db=db)
-            return JSONResponse(content={"message": f"Clicks deleted"}, status_code=status.HTTP_200_OK)
-    except Exception as e:
-        return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)
+# @click_mongo_router.get("/{id}", response_description="Get a single click", response_model=Clicks)
+# async def show_click(id: str):
+#     if (click := await db1["Clicks"].find_one({"_id": id})) is not None:
+#         return click
+#     raise HTTPException(status_code=404, detail=f"Click {id} not found")

@@ -1,6 +1,6 @@
 from sqlalchemy.orm import session
 from schemas.models import ViewsResample
-from schemas.views import ViewsResampleSchema as ViewSchema
+from schemas.views_resample import ViewsResampleSchema as ViewSchema
 from fastapi import HTTPException
 from datetime import datetime as dt
 from sqlalchemy import func

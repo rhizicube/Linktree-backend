@@ -1,52 +1,51 @@
-from fastapi import APIRouter, Depends, status
+from schemas.models import Views, UpdateViews
 from fastapi.responses import JSONResponse
-from sqlalchemy.orm import session
-from schemas.views import RequestView, ResponseView, UpdateView
-import crud.views as views
+from fastapi.encoders import jsonable_encoder
+from fastapi import APIRouter, Body, HTTPException, status
+from db_connect.mongodb_utils import client
+from core.settings import settings
+db1 = client[settings.MONGO_DB_NAME]
+view_mongo_router = APIRouter()
+@view_mongo_router.post("/", response_description="Add new view", response_model=Views)
+async def create_view(view: Views = Body(...)):
+    view = jsonable_encoder(view)
+    new_view = await db1["views"].insert_one(view)
+    created_view = await db1["views"].find_one({"_id": new_view.inserted_id})
+    return JSONResponse(status_code=status.HTTP_201_CREATED, content=created_view)
 
-from db_connect.setup import get_db
+@view_mongo_router.get('/views')
+async def list_views(id: str=None):
+    if id is not None:
+        if (view := await db1["views"].find_one({"_id": id})) is not None:
+            return view
+        raise HTTPException(status_code=404, detail=f"Student {id} not found")
+    else:
+        views = await db1["views"].find().to_list(1000)
+        return {'views': views}
 
-view_router = APIRouter()
 
-@view_router.post("/views/")
-async def create(request:RequestView, db:session=Depends(get_db)):
-    try:
-        _view = views.create_view(db, request.parameter)
-        return JSONResponse(content={"message": f"View {_view.id} created"}, status_code=status.HTTP_201_CREATED)
-    except Exception as e:
-        return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)
+@view_mongo_router.put("/{id}", response_description="Update a view", response_model=Views)
+async def update_view(id: str, view: UpdateViews = Body(...)):
+    view = {k: v for k, v in view.dict().items() if v is not None}
 
-@view_router.get("/view/")
-async def get(id:int=None, db:session=Depends(get_db)):
-    try:
-        if id:
-            _view = views.get_view_by_id(db, id)
-            if _view:
-                return ResponseView(code=status.HTTP_200_OK, status="OK", result=_view, message="Success").dict(exclude_none=True)
-            else:
-                return JSONResponse(content={"message": f"View {id} not found"}, status_code=status.HTTP_404_NOT_FOUND)
-        else:
-            _view = views.get_all_views(db=db)
-            return ResponseView(code=status.HTTP_200_OK, status="OK", result=_view, message="Success").dict(exclude_none=True)
-    except Exception as e:
-        return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)
+    if len(view) >= 1:
+        update_result = await db1["views"].update_one({"_id": id}, {"$set": view})
 
-@view_router.put("/view/")
-async def update(request:UpdateView, id:int=None, db:session=Depends(get_db)):
-    try:
-        _view = views.update_view(db, request.parameter, id)
-        return JSONResponse(content={"message": f"View {id} updated"}, status_code=status.HTTP_200_OK)
-    except Exception as e:
-        return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)
+        if update_result.modified_count == 1:
+            if (
+                updated_view := await db1["views"].find_one({"_id": id})
+            ) is not None:
+                return updated_view
 
-@view_router.delete("/view/")
-async def delete(id:int=None, db:session=Depends(get_db)):
-    try:
-        if id:
-            _view = views.delete_view(db, id)
-            return JSONResponse(content={"message": f"View {id} deleted"}, status_code=status.HTTP_200_OK)
-        else:
-            deleted_rows = views.delete_all_views(db)
-            return JSONResponse(content={"message": f"Views deleted"}, status_code=status.HTTP_200_OK)
-    except Exception as e:
-        return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)
+    if (existing_view := await db1["views"].find_one({"_id": id})) is not None:
+        return existing_view
+
+    raise HTTPException(status_code=404, detail=f"View {id} not found")
+
+
+@view_mongo_router.delete("/{id}", response_description="Delete a view")
+async def delete_view(id: str):
+    if (existing_view := await db1["views"].find_one({"_id": id})) is not None:
+        delete_result = await db1["views"].delete_one({"_id": id})
+        return JSONResponse(status_code=status.HTTP_204_NO_CONTENT, content="View deleted")
+    raise HTTPException(status_code=404, detail=f"View {id} not found")

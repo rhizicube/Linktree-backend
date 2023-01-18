@@ -9,7 +9,6 @@ from fastapi.encoders import jsonable_encoder
 from schemas.links import LinkSchema
 from schemas.settings import SettingSchema
 from schemas.profiles import ProfileSchema
-import json
 
 from db_connect.setup import get_db
 

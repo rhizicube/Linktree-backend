@@ -1,10 +1,8 @@
-from fastapi import APIRouter, Depends, status, UploadFile, File
+from fastapi import APIRouter, Depends, status
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import session
 from schemas.subscriptions import RequestSubscription, ResponseSubscription, UpdateSubscription
 import crud.subscriptions as subscriptions
-from PIL import Image
-import io
 
 
 from db_connect.setup import get_db

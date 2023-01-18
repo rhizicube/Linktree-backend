@@ -3,8 +3,6 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.orm import session
 from schemas.links import RequestLink, ResponseLink, UpdateLink
 import crud.links as links
-from PIL import Image
-import io
 
 
 from db_connect.setup import get_db

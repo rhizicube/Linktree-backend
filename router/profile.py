@@ -3,8 +3,6 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.orm import session
 from schemas.profiles import RequestProfile, ResponseProfile, UpdateProfile
 import crud.profiles as profiles
-from PIL import Image
-import io
 
 
 from db_connect.setup import get_db
