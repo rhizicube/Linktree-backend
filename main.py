@@ -1,12 +1,12 @@
 from fastapi import FastAPI
-from models import User
+from schemas.models import User
 from typing import List
-import models, uvicorn
+import schemas.models, uvicorn
 from db_connect.config import postgre_engine
 from router import user, profile, link, subscription, setting, view, click, profileDetails, view_mongo, click_mongo
 from db_connect.mongodb_utils import connect_to_mongo, close_mongo_connection
 
-models.PostgreBase.metadata.create_all(bind=postgre_engine)
+schemas.models.PostgreBase.metadata.create_all(bind=postgre_engine)
 # mongo
 # models.MongoBase.metadata.create_all(bind=mongo_engine)
 

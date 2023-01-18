@@ -1,6 +1,6 @@
 import os
 import motor.motor_asyncio
-from models import Views, UpdateViews
+from schemas.models import Views, UpdateViews
 from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
 from fastapi import APIRouter, Body, HTTPException, status

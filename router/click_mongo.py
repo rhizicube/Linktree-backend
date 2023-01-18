@@ -1,6 +1,6 @@
 import os
 import motor.motor_asyncio
-from models import Clicks, UpdateClicks
+from schemas.models import Clicks, UpdateClicks
 from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
 from fastapi import APIRouter, Body, HTTPException, status
