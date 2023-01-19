@@ -1,7 +1,7 @@
 from sqlalchemy.orm import session
 from schemas.models import Profile
 from schemas.profiles import ProfileSchema
-from .users import get_user_by_username
+# from .users import get_user_by_username
 from fastapi import HTTPException, UploadFile, File
 import os
 from utilities.generic import save_uploaded_image
@@ -70,11 +70,25 @@ def create_profile(db:session, profile:ProfileSchema):
 	Returns:
 		orm query set: returns created profile
 	"""
-	_profile = Profile(profile_name=profile.profile_name, profile_link=profile.profile_link, profile_bio=profile.profile_bio, username=get_user_by_username(db, profile.username).username)
+	_profile = Profile(profile_name=profile.profile_name, profile_link=profile.profile_link, profile_bio=profile.profile_bio, username=profile.username)
 	db.add(_profile)
 	db.commit()
 	db.refresh(_profile)
 	return _profile
+
+
+def get_all_usernames(db:session):
+	"""Function to get all usernames
+
+	Args:
+		db (session): DB connection session for ORM functionalities
+
+	Returns:
+		list: returns list of usernames
+	"""
+	usernames = db.query(Profile).with_entities(Profile.username).all()
+	usernames = [u[0] for u in usernames]
+	return usernames
 
 
 def delete_all_profiles(db:session):
@@ -129,6 +143,8 @@ def update_profile(db:session, id:int, bio:str=None, name:str=None, url:str=None
 		db (session): DB connection session for ORM functionalities
 		id (int): profile's pk
 		bio (str, optional): Profile's bio. Defaults to None.
+		name (str, optional): Profile's name. Defaults to None.
+		url (str, optional): Profile's url. Defaults to None.
 
 	Returns:
 		orm query set: returns updated profile

@@ -8,18 +8,6 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import JSON
 
 
-class User(PostgreBase):
-	__tablename__ = "user"
-
-	username=Column(String, primary_key=True)
-	first_name=Column(String, index=True, nullable=True)
-	last_name=Column(String, index=True, nullable=True)
-	email_id=Column(String, index=True, nullable=False)
-	user_created=Column(DateTime, server_default=func.now())
-	
-	profiles = relationship("Profile", back_populates="user")
-
-
 class Profile(PostgreBase):
 	__tablename__ = "profile"
 	
@@ -29,15 +17,13 @@ class Profile(PostgreBase):
 	profile_bio=Column(Text, nullable=True)
 	profile_image_path=Column(String, nullable=True)
 	profile_created=Column(DateTime, server_default=func.now())
-	username = Column(String, ForeignKey("user.username"), nullable=False, server_onupdate="CASCADE", server_ondelete="CASCADE")
-	subscription_id = Column(Integer, ForeignKey("subscription.id"), nullable=True, server_onupdate="CASCADE", server_ondelete="CASCADE")
-	user = relationship("User", back_populates="profile")
+	username = Column(String, nullable=False, unique=True)
+	subscription_id = Column(Integer, ForeignKey("subscription.id"), nullable=True, server_onupdate="SET NULL", server_ondelete="SET NULL")
+
+	subscription = relationship("Subscription", back_populates="profile")
 	links = relationship("Link", back_populates="profile")
 	settings = relationship("Setting", back_populates="profile")
 	views = relationship("ViewsResample", back_populates="profile")
-	subscription = relationship("Subscription", back_populates="profile")
-
-
 
 
 class Link(PostgreBase):
@@ -53,6 +39,7 @@ class Link(PostgreBase):
 	profile_id=Column(Integer, ForeignKey("profile.id"), nullable=False, server_onupdate="CASCADE", server_ondelete="CASCADE")
 
 	profile=relationship("Profile", back_populates="links")
+	clicks=relationship("ClicksResample", back_populates="link")
 
 
 class Setting(PostgreBase):
@@ -65,33 +52,52 @@ class Setting(PostgreBase):
 	profile_id = Column(Integer, ForeignKey("profile.id"), nullable=False, server_onupdate="CASCADE", server_ondelete="CASCADE")
 	profile = relationship("Profile", back_populates="settings")
 
+
+class Subscription(PostgreBase):
+	__tablename__ = "subscription"
+
+	id=Column(Integer, primary_key=True, autoincrement=True)
+	subscription_name=Column(String, nullable=False, unique=True)
+	subscription_type=Column(String, nullable=False)
+	valid_from = Column(DateTime, nullable=True)
+	valid_to = Column(DateTime, nullable=True)
+	subscription_description=Column(Text, nullable=True)
+	subscription_reminder = Column(Boolean, nullable=False)
+ 
+	profile = relationship("Profile", back_populates="subscription")
+
+
 class ViewsResample(PostgreBase):
-	__tablename__ = "viewresample"
+	__tablename__ = "viewsresample"
 
 	id=Column(Integer, primary_key=True, autoincrement=True)
 	session_id=Column(String, nullable=False)
-	device_name=Column(String, nullable=False)
-	view_count = Column(Integer, nullable=False)
-	view_location = Column(String, nullable=True)
-	session_created = Column(DateTime, server_default=func.now())
+	device_type=Column(String, nullable=False)
+	view_count=Column(Integer, nullable=False)
+	view_location=Column(JSON, nullable=True)
+	view_created=Column(DateTime, server_default=func.now())
 	profile_id=Column(Integer, ForeignKey("profile.id"), nullable=False, server_onupdate="CASCADE", server_ondelete="CASCADE")
-	profile = relationship("Profile", back_populates="viewresample")
-	clicks = relationship("ClicksResample", back_populates="viewresample")
+ 
+	profile=relationship("Profile", back_populates="views")
+	clicks=relationship("ClicksResample", back_populates="view")
 
 
 class ClicksResample(PostgreBase):
-	__tablename__ = "clickresample"
+	__tablename__ = "clicksresample"
 
 	id=Column(Integer, primary_key=True, autoincrement=True)
 	click_count=Column(Integer, nullable=False)
 	click_created=Column(DateTime, server_default=func.now())
-	view_id=Column(Integer, ForeignKey("view.id"), nullable=False, server_onupdate="CASCADE", server_ondelete="CASCADE")
+	view_id=Column(Integer, ForeignKey("viewsresample.id"), nullable=False, server_onupdate="CASCADE", server_ondelete="CASCADE")
 	link_id=Column(Integer, ForeignKey("link.id"), nullable=False, server_onupdate="CASCADE", server_ondelete="CASCADE")
-	link = relationship("Link", back_populates="clickresample")
-	view = relationship("ViewsResample", back_populates="clickresample")
+ 
+	link=relationship("Link", back_populates="clicks")
+	view=relationship("ViewsResample", back_populates="clicks")
+
 
 
 """ All MongoDB models """
+
 class PyObjectId(ObjectId):
 	@classmethod
 	def __get_validators__(cls):

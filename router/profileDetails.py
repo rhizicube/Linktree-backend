@@ -14,71 +14,90 @@ from db_connect.setup import get_db
 
 profile_detail_router = APIRouter()
 
-@profile_detail_router.get("/getalldetails")
+@profile_detail_router.get("/getalldetails/")
 async def get(username:str, db:session=Depends(get_db)):
-    # proceed if username exists
-    try:
-        if username:
-            try:
-                _profile = profiles.get_profile_by_user(db, username)
-            except:
-                _profile = None
-            if _profile is not None:
-                _links = links.get_link_by_profile(db, _profile.id)
-                _settings = settings.get_setting_by_profile(db, _profile.id)
-            else:
-                _links = None
-                _settings = None
-            _profile_json = jsonable_encoder(_profile)
-            _links_json = jsonable_encoder(_links)
-            _settings_json = jsonable_encoder(_settings)
-            return JSONResponse(status_code=status.HTTP_200_OK, content={"data":{"profile":_profile_json, "link":_links_json, "settings":_settings_json}})
-        else:
-            return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content={"message":"Username is required"})
-    except Exception as e:
-        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content={"message":str(e)})
+	# proceed if username exists
+	try:
+		if username:
+			try:
+				_profile = profiles.get_profile_by_user(db, username)
+			except:
+				_profile = None
+			if _profile is not None:
+				_links = links.get_link_by_profile(db, _profile.id)
+				_settings = settings.get_setting_by_profile(db, _profile.id)
+			else:
+				_links = None
+				_settings = None
+			# Can be converted to json format together
+			resp_data = {"profile":_profile, "link":_links, "settings":_settings}
+			resp_data = jsonable_encoder(resp_data)
+			return JSONResponse(status_code=status.HTTP_200_OK, content={"data": resp_data})
+		else:
+			return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content={"message":"Username is required"})
+	except Exception as e:
+		return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content={"message":str(e)})
+
 
 @profile_detail_router.post("/savedetails/")
 async def create(username:str, request: Dict[Any, Any], db:session=Depends(get_db)):
-    try:
-        if username:
-            if request["profile"] is not None:
-                request["profile"]["username"] = username
-                profile = ProfileSchema(**request["profile"])
-                _profile = profiles.create_profile(db, profile)
-                print(profile)
-            if request["link"] is not None:
-                for link in request["link"]:
-                    link["profile_id"] = _profile.id
-                    link["tiny_url"] = ""
-                    link = LinkSchema(**link)
-                    _link = links.create_link(db, link)
-                    print(link)
-            if request["setting"] is not None:
-                request["setting"]["profile_management"] = _profile.id
-                setting = SettingSchema(**request["setting"])
-                _setting = settings.create_setting(db, setting)
-                print(setting)
-            return JSONResponse(status_code=status.HTTP_201_CREATED, content={"message":"Profile details saved"})
-        else:
-            return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content={"message":"Username is required"})
-    except Exception as e:
-        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content={"message":str(e)})
+	try:
+		if username:
+			response_data = {} # To return back the primary key details for the created rows
+			# If profile isnt there in request, get _profile separately
+			all_usernames = profiles.get_all_usernames(db)
+			if username in all_usernames or request.get("profile", None) is None:
+				_profile = profiles.get_profile_by_user(db, username)
+			else:
+				request["profile"]["username"] = username
+				profile = ProfileSchema(**request["profile"])
+				_profile = profiles.create_profile(db, profile)
+				print(profile)
+				response_data["profile"] = jsonable_encoder(_profile)
+			if request.get("link", None) is not None:
+				if type(request["link"]) == list:
+					resp_links = []
+					for link in request["link"]:
+						link["profile"] = _profile.id
+						link = LinkSchema(**link)
+						_link = links.create_link(db, link)
+						print(link)
+						resp_links.append(jsonable_encoder(_link))
+					response_data["links"] = resp_links
+				else:
+					link = request["link"]
+					link["profile"] = _profile.id
+					link = LinkSchema(**link)
+					_link = links.create_link(db, link)
+					print(link)
+					response_data["links"] = _link
+			if request.get("setting", None) is not None:
+				request["setting"]["profile"] = _profile.id
+				setting = SettingSchema(**request["setting"])
+				_setting = settings.create_setting(db, setting)
+				print(setting)
+				response_data["setting"] = jsonable_encoder(_setting)
+			return JSONResponse(status_code=status.HTTP_201_CREATED, content={"message":"Profile details saved", "data": response_data})
+		else:
+			return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content={"message":"Username is required"})
+	except Exception as e:
+		return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content={"message":str(e)})
+
 
 @profile_detail_router.put("/updatedetails/")
-async def update(username:str, link_id:int, request: Dict[Any, Any], db:session=Depends(get_db)):
-    try:
-        if username:
-            profile = profiles.get_profile_by_user(db, username)
-            if request["profile"]["profile_bio"] is not None:
-                _profile = profiles.update_profile(db, profile.id, request["profile"]["profile_bio"])
-            if request["setting"] is not None:
-                setting = settings.get_setting_by_profile(db, profile.id)
-                _setting = settings.update_setting(db, setting.id, request["setting"]["profile_social"])
-            if len(request["link"])!=0 and link_id is not None:
-                _link = links.update_link(db, link_id, request["link"][0]["link_name"], request["link"][0]["link_url"], request["link"][0]["link_thumbnail"], request["link"][0]["link_enable"])
-            return JSONResponse(status_code=status.HTTP_200_OK, content={"message":"Profile details updated"})
-        else:
-            return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content={"message":"Username is required"})
-    except Exception as e:
-        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content={"message":str(e)})
+async def update(username:str, request: Dict[Any, Any], link_id:int=None, db:session=Depends(get_db)):
+	try:
+		if username:
+			profile = profiles.get_profile_by_user(db, username)
+			if request.get("profile", None) is not None:
+				_profile = profiles.update_profile(db, profile.id, request["profile"].get("profile_bio", None), request["profile"].get("profile_name", None), request["profile"].get("profile_url", None))
+			if request.get("setting", None) is not None:
+				setting = settings.get_setting_by_profile(db, profile.id)
+				_setting = settings.update_setting(db, setting.id, request["setting"].get("profile_social", None))
+			if link_id is not None and request.get("link", None) is not None and type(request["link"]) == dict:
+				_link = links.update_link(db, link_id, request["link"].get("link_enable", None), request["link"].get("link_name", None), request["link"].get("link_url", None))
+			return JSONResponse(status_code=status.HTTP_200_OK, content={"message":"Profile details updated"})
+		else:
+			return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content={"message":"Username is required"})
+	except Exception as e:
+		return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content={"message":str(e)})

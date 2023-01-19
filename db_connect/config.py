@@ -19,7 +19,7 @@ postgre_engine = create_engine(POSTGRE_DATABASE_URL, poolclass=QueuePool, pool_p
 # To debug with sqlalchemy logs
 # postgre_engine = create_engine(POSTGRE_DATABASE_URL, echo="debug", poolclass=QueuePool, pool_pre_ping=True, pool_size=10, max_overflow=0, connect_args={"options": "-c timezone=utc"})
 
-postgre_sessionLocal = sessionmaker(autocommit=True, autoflush=False, bind=postgre_engine)
+postgre_sessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=postgre_engine)
 PostgreBase = declarative_base()
 
 

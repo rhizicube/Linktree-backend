@@ -26,9 +26,11 @@ async def get_user_profile_details(url:str, request:Request, db:session):
 	cookie_id = request.cookies.get('linktree_visitor', None)
 	if not cookie_id:
 		cookie_id = await create_cookie_id()
-		response_cookie = cookie_id
+		response_cookie = cookie_id	
 	# Get user's profile configurations
 	_profile = profiles.get_profile_by_url(db, url)
+	if not _profile:
+		return {"profile": None, "link": None, "setting": None}, response_cookie
 	_link = links.get_link_by_profile(db, _profile.id)
 	_setting = settings.get_setting_by_profile(db, _profile.id)
 	resp_data = {"profile": _profile, "link": _link, "setting": _setting}
