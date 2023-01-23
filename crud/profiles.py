@@ -106,7 +106,8 @@ def delete_all_profiles(db:session):
 		deleted_rows = _profiles.delete()
 		db.commit()
 		for p in _profile_img_paths:
-			os.remove(p.profile_image_path)
+			if p and os.path.exists(p):
+				os.remove(p)
 		return deleted_rows
 	except Exception as e:
 		db.rollback()
@@ -129,7 +130,8 @@ def delete_profile_by_id(db:session, id:int):
 	if _profile:
 		db.delete(_profile)
 		db.commit()
-		os.remove(_profile.profile_image_path)
+		if _profile.profile_image_path and os.path.exists(_profile.profile_image_path):
+			os.remove(_profile.profile_image_path)
 		return _profile
 	else:
 		db.rollback()

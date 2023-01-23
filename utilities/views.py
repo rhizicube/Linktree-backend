@@ -3,7 +3,7 @@ from user_agents import parse
 from core.constants import locationDatabaseIPv4, locationDatabaseIPv6
 from utilities.generic import valid_ip_address
 
-from db_connect.setup import get_mongo_database
+from db_connect.config import mongoDB
 
 
 
@@ -14,7 +14,7 @@ async def create_cookie_id() -> str:
 	Returns:
 		str: cookie id
 	"""
-	mongoDBConnection = get_mongo_database()
+	mongoDBConnection = mongoDB.database
 	short_url_length = 25
 	distinct_sessions = await mongoDBConnection["views"].distinct("session_id")
 	print(distinct_sessions)

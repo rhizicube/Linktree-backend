@@ -10,7 +10,7 @@ from db_connect.setup import get_db
 profile_router = APIRouter()
 
 
-@profile_router.post("/profile/")
+# @profile_router.post("/profile/")
 async def create(request:RequestProfile, db:session=Depends(get_db)):
 	"""API to create profile
 
@@ -61,7 +61,7 @@ async def get(id:int=None, username:str=None, db:session=Depends(get_db)):
 		return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)
 
 
-@profile_router.put("/profile/")
+# @profile_router.put("/profile/")
 async def update(request:UpdateProfile, id:int=None, db:session=Depends(get_db)):
 	"""API to update profile
 

@@ -20,6 +20,7 @@ def get_all_links(db:session, skip:int=0, limit:int=100):
 	"""
 	return db.query(Link).offset(skip).limit(limit).all()
 
+
 def get_link_by_id(db:session, id:int):
 	"""Function to get link for the given pk
 
@@ -84,6 +85,7 @@ def create_link(db:session, link:LinkSchema):
 	db.refresh(_link)
 	return _link
 
+
 def delete_all_links(db:session):
 	"""Function to delete links
 
@@ -94,11 +96,17 @@ def delete_all_links(db:session):
 		orm query set: returns number of deleted rows, including any cascades
 	"""
 	try:
-		deleted_rows = db.query(Link).delete()
+		_links = db.query(Link)
+		_link_thumbnails = [l.link_thumbnail for l in _links]
+		deleted_rows = _links.delete()
 		db.commit()
+		for l in _link_thumbnails:
+			if l and os.path.exists(l):
+				os.remove(l)
 		return deleted_rows
 	except Exception as e:
 		db.rollback()
+
 
 def delete_link_by_id(db:session, id:int):
 	"""Function to delete link
@@ -117,6 +125,8 @@ def delete_link_by_id(db:session, id:int):
 	if _link:
 		db.delete(_link)
 		db.commit()
+		if _link.link_thumbnail and os.path.exists(_link.link_thumbnail):
+			os.remove(_link.link_thumbnail)
 		return _link
 	else:
 		db.rollback()

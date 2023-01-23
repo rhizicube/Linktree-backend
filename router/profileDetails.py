@@ -70,7 +70,7 @@ async def create(username:str, request: Dict[Any, Any], db:session=Depends(get_d
 					link = LinkSchema(**link)
 					_link = links.create_link(db, link)
 					print(link)
-					response_data["links"] = _link
+					response_data["links"] = jsonable_encoder(_link)
 			if request.get("setting", None) is not None:
 				request["setting"]["profile"] = _profile.id
 				setting = SettingSchema(**request["setting"])

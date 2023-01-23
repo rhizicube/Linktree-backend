@@ -31,5 +31,3 @@ async def close_mongo_connection():
 	mongoDB.client.close()
 	print("MongoDB closed!")
 
-def get_mongo_database():
-	return mongoDB.client[settings.MONGO_DB_NAME]

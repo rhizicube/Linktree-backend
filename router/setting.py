@@ -8,7 +8,7 @@ from db_connect.setup import get_db
 setting_router = APIRouter()
 
 
-@setting_router.post("/setting/")
+# @setting_router.post("/setting/")
 async def create(request:RequestSetting, db:session=Depends(get_db)):
 	"""API to create setting
 
@@ -56,7 +56,7 @@ async def get(id:int=None, profile:int=None, db:session=Depends(get_db)):
 	except Exception as e:
 		return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)
 
-@setting_router.put("/setting/")
+# @setting_router.put("/setting/")
 async def update(request:UpdateSetting, id:int, db:session=Depends(get_db)):
 	"""API to update profile setting
 
