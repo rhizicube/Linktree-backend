@@ -25,7 +25,7 @@ async def create(request:RequestSetting, db:session=Depends(get_db)):
 	except Exception as e:
 		return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)
 
-@setting_router.get("/setting/")
+# @setting_router.get("/setting/")
 async def get(id:int=None, profile:int=None, db:session=Depends(get_db)):
 	"""API to get profile setting
 

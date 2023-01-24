@@ -29,7 +29,7 @@ async def create(request:RequestProfile, db:session=Depends(get_db)):
 			return JSONResponse(content={"message": f"Profile Link already exists"}, status_code=status.HTTP_400_BAD_REQUEST)
 		return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)
 
-@profile_router.get("/profile/")
+# @profile_router.get("/profile/")
 async def get(id:int=None, username:str=None, db:session=Depends(get_db)):
 	"""API to get profile
 

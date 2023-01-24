@@ -29,7 +29,7 @@ async def create(request:RequestLink, db:session=Depends(get_db)):
 			return JSONResponse(content={"message": f"Link URL already exists"}, status_code=status.HTTP_400_BAD_REQUEST)
 		return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)
 
-@link_router.get("/link/")
+# @link_router.get("/link/")
 async def get(id:int=None, profile_id:int=None, db:session=Depends(get_db)):
 	"""API to get link
 
