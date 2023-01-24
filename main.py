@@ -18,7 +18,7 @@ def include_routers():
 	main_router.include_router(link.link_router, prefix="/api/links", tags=["link"])
 	main_router.include_router(setting.setting_router, prefix="/api/settings", tags=["setting"])
 	# main_router.include_router(trials.router)
-	main_router.include_router(user_profile.router, tags=["Visitor"])
+	main_router.include_router(user_profile.router, prefix="/api", tags=["Visitor"])
 	main_router.include_router(profileDetails.profile_detail_router, prefix='/api/profile', tags=["User"])
 	# main_router.include_router(view.view_router, tags=["View"])
 	# main_router.include_router(click.click_router, tags=["Click"])
