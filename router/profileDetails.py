@@ -18,7 +18,8 @@ profile_detail_router = APIRouter()
 async def get(username:str, db:session=Depends(get_db)):
 	# proceed if username exists
 	try:
-		if username:
+		usernames = profiles.get_all_usernames(db)
+		if username in usernames:
 			try:
 				_profile = profiles.get_profile_by_user(db, username)
 			except:
@@ -27,8 +28,7 @@ async def get(username:str, db:session=Depends(get_db)):
 				_links = links.get_link_by_profile(db, _profile.id)
 				_settings = settings.get_setting_by_profile(db, _profile.id)
 			else:
-				_links = None
-				_settings = None
+				return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content={"message":"Profile doesn't exist"})
 			# Can be converted to json format together
 			resp_data = {"profile":_profile, "link":_links, "settings":_settings}
 			resp_data = jsonable_encoder(resp_data)
