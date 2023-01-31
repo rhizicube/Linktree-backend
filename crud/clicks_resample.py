@@ -65,7 +65,7 @@ def create_click(db:session, click:ClickSchema):
     Returns:
         orm query set: returns created click
     """
-    _click = ClicksResample(click_count=click.click_count, view_id=click.view_id, link_id=click.link_id)
+    _click = ClicksResample(click_count=click.click_count, view_id=click.view_id, link_id=click.link_id, click_sampled_timestamp=click.click_sampled_timestamp)
     print(_click)
     db.add(_click)
     db.commit()

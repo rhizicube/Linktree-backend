@@ -55,7 +55,8 @@ async def get(id:int=None, link_id:int=None, view_id:int=None, db:session=Depend
 		return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)
 
 @click_router.put("/click/")
-try:
+async def update(id:int, request:UpdateClick, db:session=Depends(get_db)):
+    try:
         click_id = clicks_resample.get_click_by_id(db=db, id=id)
         if click_id is not None:
             _click = clicks_resample.update_click(db=db, id=id, request=request)
@@ -67,7 +68,7 @@ try:
 
 @click_router.delete("/click/")
 async def delete(id:int=None, db:session=Depends(get_db)):
-	try:
+    try:
         if id:
             click_id = clicks_resample.get_click_by_id(db=db, id=id)
             if click_id is not None:

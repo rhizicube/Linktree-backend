@@ -22,7 +22,7 @@ async def create(request:RequestSubscription, db:session=Depends(get_db)):
     """
     try:
         _subscription = subscriptions.create_subscription(db, request.parameter)
-        return JSONResponse(content={"message": f"Subsciption {_subscription.id} created"}, status_code=status.HTTP_201_CREATED)
+        return JSONResponse(content={"message": f"Subscription {_subscription.id} created"}, status_code=status.HTTP_201_CREATED)
     except Exception as e:
         print("Error")
         return ResponseSubscription(code=status.HTTP_400_BAD_REQUEST, status="BAD REQUEST", message=str(e)).dict(exclude_none=True)

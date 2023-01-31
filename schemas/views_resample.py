@@ -10,6 +10,7 @@ class ViewsResampleSchema(BaseModel):
     device_name: str
     view_count: int
     profiles:int
+    view_sampled_timestamp: str
     class Config:
         orm_mode=True
 
