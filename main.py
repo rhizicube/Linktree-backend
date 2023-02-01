@@ -2,7 +2,7 @@ from fastapi import FastAPI, APIRouter
 import schemas.models as models
 import uvicorn
 from db_connect.config import postgre_engine
-from router import profile, link, trials, user_profile, setting, view, click, profileDetails
+from router import profile, link, user_profile, setting, view, click, profileDetails
 # from router import user_profile, profileDetails
 from db_connect.setup import connect_to_mongo, close_mongo_connection
 from celery_config.celery_utils import create_celery
@@ -13,11 +13,9 @@ models.PostgreBase.metadata.create_all(bind=postgre_engine)
 main_router = APIRouter()
 
 def include_routers():
-	# main_router.include_router(user.user_router, prefix="/api/users", tags=["user"])
 	main_router.include_router(profile.profile_router, prefix="/api/profiles", tags=["profile"])
 	main_router.include_router(link.link_router, prefix="/api/links", tags=["link"])
 	main_router.include_router(setting.setting_router, prefix="/api/settings", tags=["setting"])
-	# main_router.include_router(trials.router)
 	main_router.include_router(user_profile.router, prefix="/api", tags=["Visitor"])
 	main_router.include_router(profileDetails.profile_detail_router, prefix='/api/profile', tags=["User"])
 	# main_router.include_router(view.view_router, tags=["View"])

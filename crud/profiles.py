@@ -70,7 +70,7 @@ def create_profile(db:session, profile:ProfileSchema):
 	Returns:
 		orm query set: returns created profile
 	"""
-	_profile = Profile(profile_name=profile.profile_name, profile_link=profile.profile_link, profile_bio=profile.profile_bio, username=profile.username)
+	_profile = Profile(profile_name=profile.profile_name, profile_link=profile.profile_link, profile_bio=profile.profile_bio, profile_description=profile.profile_description, username=profile.username)
 	db.add(_profile)
 	db.commit()
 	db.refresh(_profile)
@@ -138,7 +138,7 @@ def delete_profile_by_id(db:session, id:int):
 		raise HTTPException(status_code=400, detail="Profile not found")
 
 
-def update_profile(db:session, id:int, bio:str=None, name:str=None, url:str=None):
+def update_profile(db:session, id:int, bio:str=None, name:str=None, url:str=None, desc=None):
 	"""Function to update profile
 
 	Args:
@@ -152,6 +152,8 @@ def update_profile(db:session, id:int, bio:str=None, name:str=None, url:str=None
 		orm query set: returns updated profile
 	"""
 	_profile = get_profile_by_id(db, id)
+	if not _profile:
+		return
 	
 	if bio is not None:
 		_profile.profile_bio = bio
@@ -159,7 +161,8 @@ def update_profile(db:session, id:int, bio:str=None, name:str=None, url:str=None
 		_profile.profile_name = name
 	if url is not None:
 		_profile.profile_link = url
-	
+	if desc is not [None, {}]:
+		_profile.profile_description = desc
 	db.commit()
 	db.refresh(_profile)
 	return _profile

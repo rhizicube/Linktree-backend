@@ -28,7 +28,7 @@ async def create_view(view: UpdateViews = Body(...)):
 
 
 @view_router.get("/view/")
-async def get_view(id: str = None):
+async def get_view(id: str = None, profile:int = None):
 	"""API to get views
 
 	Args:
@@ -40,6 +40,8 @@ async def get_view(id: str = None):
 	try:
 		if id:
 			_view = await views.get_view_by_id(ObjectId(id))
+		elif profile:
+			_view = await views.get_views_by_profile(profile)
 		else:
 			_view = await views.get_all_views()
 		if not _view:

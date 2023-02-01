@@ -199,13 +199,13 @@ def get_all_tiny_links(db:session):
 
 
 def get_link_by_tiny_url(url:str, db:session):
-	"""Function to get original url by tiny url
+	"""Function to get link by tiny url
 
 	Args:
 		url (str): tiny url
 		db (session):  DB connection session for ORM functionalities
 
 	Returns:
-		str: Original url inserted by user
+		str: Link having the tiny url
 	"""
-	return db.query(Link).filter_by(link_tiny=url).first().link_url
+	return db.query(Link).filter_by(link_tiny=url).first()#.link_url

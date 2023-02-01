@@ -2,6 +2,7 @@ from schemas.models import UpdateClicks
 from fastapi.encoders import jsonable_encoder
 from datetime import datetime as dt
 from db_connect.config import mongoDB
+from pymongo import ASCENDING
 
 
 async def create_click_raw(cookie, link):
@@ -51,6 +52,26 @@ async def get_all_clicks():
 	mongoDBConnection = mongoDB.database
 	cursor = mongoDBConnection["clicks"].find()
 	all = await cursor.to_list(length=100)
+	return all
+
+
+async def get_clicks_by_session_datetime_range(session:str, start:str=None, end:str=dt.strftime(dt.utcnow(), "%Y-%m-%dT%H:%M:%S")) -> list:
+	"""Function to get clicks for a session within a date-time range
+
+	Args:
+		session (str): session id
+		start (str, optional): start time. Defaults to None.
+		end (str, optional): end time. Defaults to dt.strftime(dt.utcnow(), "%Y-%m-%dT%H:%M:%S").
+
+	Returns:
+		list: Queried clicks
+	"""
+	mongoDBConnection = mongoDB.database
+	if start:
+		cursor = mongoDBConnection["clicks"].find().where(f"this.session_id == '{session}' && this.click_created > '{start}' && this.click_created <= '{end}'").sort("click_created", ASCENDING)
+	else:
+		cursor = mongoDBConnection["clicks"].find().where(f"this.profile_link == '{session}' && this.click_created <= '{end}'").sort("click_created", ASCENDING)
+	all = await cursor.to_list(length=10000)
 	return all
 
 

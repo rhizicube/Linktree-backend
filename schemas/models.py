@@ -19,6 +19,7 @@ class Profile(PostgreBase):
 	profile_link=Column(String, nullable=False, unique=True)
 	profile_bio=Column(Text, nullable=True)
 	profile_image_path=Column(String, nullable=True)
+	profile_description=Column(Text, nullable=True)
 	profile_created=Column(DateTime, server_default=func.now())
 	username = Column(String, nullable=False, unique=True)
 	subscription_id = Column(Integer, ForeignKey("subscription.id"), nullable=True, server_onupdate="SET NULL", server_ondelete="SET NULL")

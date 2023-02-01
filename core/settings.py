@@ -3,6 +3,34 @@ import os
 from celery.schedules import crontab
 
 
+def get_celery_beat_scheduled_tasks():
+	scheduled_tasks = {}
+	
+	if os.environ.get("ENABLE_TRIAL", "No") == "Yes":
+		scheduled_tasks['celery_trial'] = {
+			# 'task': 'tasks.clicks.celery_trials',
+			'task': 'tasks.visitor_trend.celery_trials_trend',
+			'schedule': crontab(
+				minute="*/1", 
+				hour="*",
+				day_of_month="*",
+				month_of_year="*"
+				),
+		}
+	if os.environ.get("ENABLE_VISITOR_TREND", "Yes") == "Yes":
+		scheduled_tasks['visitor_view_click_trend'] = {
+			'task': 'tasks.visitor_trend.save_visitor_sampled_data',
+			'schedule': crontab(
+				minute="*/2", 
+				hour="*",
+				day_of_month="*",
+				month_of_year="*"
+				),
+		}
+	
+	return scheduled_tasks
+
+
 class Settings(BaseSettings):
 	# PostgreSQL connection
 	POSTGRE_DB_ENGINE: str = os.environ.get("POSTGRES_ENGINE", "postgresql")
@@ -41,17 +69,9 @@ class Settings(BaseSettings):
 	CELERY_TIMEZONE: str = "UTC"
 	CELERY_BROKER_URL: str = os.environ.get("CELERY_BROKER_URL", f"amqp://{AMQP_USER}:{AMQP_PASS}@{AMQP_HOST}:{AMQP_PORT}//")
 	CELERY_RESULT_BACKEND: str = os.environ.get("CELERY_RESULT_BACKEND", "rpc://")
-	CELERY_BEAT_SCHEDULE = {}
+	CELERY_BEAT_SCHEDULE = get_celery_beat_scheduled_tasks()
 
-	CELERY_BEAT_SCHEDULE['celery_trial'] = {
-		'task': 'tasks.clicks.celery_trials',
-		'schedule': crontab(
-			minute="*/1", 
-			hour="*",
-			day_of_month="*",
-			month_of_year="*"
-			),
-	}
+	
 
 settings = Settings()
 print(settings.CELERY_BEAT_SCHEDULE)
