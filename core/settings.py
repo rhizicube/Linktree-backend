@@ -1,6 +1,6 @@
 from pydantic import BaseSettings
 import os
-from celery.schedules import crontab
+# from celery.schedules import crontab
 
 
 class Settings(BaseSettings):
@@ -30,28 +30,28 @@ class Settings(BaseSettings):
 	MEDIA_ROOT: str = os.path.join(BASE_DIR, 'media/')
 
 	# Path to file containing location details based on IP
-	IPv4_LOCATION_FILE_PATH: str = os.path.join(BASE_DIR, 'ip2_locations', "IP2LOCATION-LITE-DB5.BIN")
-	IPv6_LOCATION_FILE_PATH: str = os.path.join(BASE_DIR, 'ip2_locations', "IP2LOCATION-LITE-DB9.IPV6.BIN")
+	# IPv4_LOCATION_FILE_PATH: str = os.path.join(BASE_DIR, 'ip2_locations', "IP2LOCATION-LITE-DB5.BIN")
+	# IPv6_LOCATION_FILE_PATH: str = os.path.join(BASE_DIR, 'ip2_locations', "IP2LOCATION-LITE-DB9.IPV6.BIN")
 
 	# Celery setup
-	AMQP_USER: str = "rhizicube-admin"
-	AMQP_PASS: str = "cube123"
-	AMQP_HOST: str = "localhost"
-	AMQP_PORT: int = 5672
-	CELERY_TIMEZONE: str = "UTC"
-	CELERY_BROKER_URL: str = os.environ.get("CELERY_BROKER_URL", f"amqp://{AMQP_USER}:{AMQP_PASS}@{AMQP_HOST}:{AMQP_PORT}//")
-	CELERY_RESULT_BACKEND: str = os.environ.get("CELERY_RESULT_BACKEND", "rpc://")
-	CELERY_BEAT_SCHEDULE = {}
+	# AMQP_USER: str = "rhizicube-admin"
+	# AMQP_PASS: str = "cube123"
+	# AMQP_HOST: str = "localhost"
+	# AMQP_PORT: int = 5672
+	# CELERY_TIMEZONE: str = "UTC"
+	# CELERY_BROKER_URL: str = os.environ.get("CELERY_BROKER_URL", f"amqp://{AMQP_USER}:{AMQP_PASS}@{AMQP_HOST}:{AMQP_PORT}//")
+	# CELERY_RESULT_BACKEND: str = os.environ.get("CELERY_RESULT_BACKEND", "rpc://")
+	# CELERY_BEAT_SCHEDULE = {}
 
-	CELERY_BEAT_SCHEDULE['celery_trial'] = {
-		'task': 'tasks.clicks.celery_trials',
-		'schedule': crontab(
-			minute="*/1", 
-			hour="*",
-			day_of_month="*",
-			month_of_year="*"
-			),
-	}
+	# CELERY_BEAT_SCHEDULE['celery_trial'] = {
+	# 	'task': 'tasks.clicks.celery_trials',
+	# 	'schedule': crontab(
+	# 		minute="*/1", 
+	# 		hour="*",
+	# 		day_of_month="*",
+	# 		month_of_year="*"
+	# 		),
+	# }
 
 settings = Settings()
-print(settings.CELERY_BEAT_SCHEDULE)
+# print(settings.CELERY_BEAT_SCHEDULE)
