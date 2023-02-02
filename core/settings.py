@@ -1,12 +1,17 @@
 from pydantic import BaseSettings
 import os
 from celery.schedules import crontab
+from dotenv import load_dotenv
+from pathlib import Path
+
+dotenv_path = Path(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".backend.env"))
+load_dotenv(dotenv_path=dotenv_path)
 
 
 def get_celery_beat_scheduled_tasks():
 	scheduled_tasks = {}
 	
-	if os.environ.get("ENABLE_TRIAL", "No") == "Yes":
+	if os.getenv('ENABLE_TRIAL', "No") == "Yes":
 		scheduled_tasks['celery_trial'] = {
 			# 'task': 'tasks.clicks.celery_trials',
 			'task': 'tasks.visitor_trend.celery_trials_trend',
@@ -17,7 +22,7 @@ def get_celery_beat_scheduled_tasks():
 				month_of_year="*"
 				),
 		}
-	if os.environ.get("ENABLE_VISITOR_TREND", "Yes") == "Yes":
+	if os.getenv('ENABLE_VISITOR_TREND', "No") == "Yes":
 		scheduled_tasks['visitor_view_click_trend'] = {
 			'task': 'tasks.visitor_trend.save_visitor_sampled_data',
 			'schedule': crontab(
