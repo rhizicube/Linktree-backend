@@ -217,6 +217,7 @@ async def get(id: int, start: dt = None, end: dt = None, db: session = Depends(g
         views_table = views_table.reset_index()
         views_table["view_sampled_timestamp"] = views_table["view_sampled_timestamp"].dt.strftime('%Y-%m-%d')
         views_response_data = json.loads(views_table.to_json(orient='records'))
+        # Use dict_variable.items() to iterate through the dictionary
         for i in range(len(views_response_data)):
             for j in views_response_data[i]:
                 if j != "view_sampled_timestamp":
@@ -237,6 +238,7 @@ async def get(id: int, start: dt = None, end: dt = None, db: session = Depends(g
         clicks_table = clicks_table.reset_index()
         clicks_table["click_sampled_timestamp"] = clicks_table["click_sampled_timestamp"].dt.strftime('%Y-%m-%d')
         clicks_response_data = json.loads(clicks_table.to_json(orient='records'))
+        # Use dict_variable.items() to iterate through the dictionary
         for i in range(len(clicks_response_data)):
             for j in clicks_response_data[i]:
                 if j != "click_sampled_timestamp":
@@ -251,6 +253,19 @@ async def get(id: int, start: dt = None, end: dt = None, db: session = Depends(g
     except:
         print("here")
         return JSONResponse(content={"message": f"Profile {id} not found"}, status_code=status.HTTP_404_NOT_FOUND)
+
+# Comments:
+#     1. The above code will query everything in the DB, and then pick only those rows that is between the given date range. This is inefficient. Query the DB only for rows between the given date range, dont query unnecessary data 
+#     2. Use inbuilt dict functions to iterate over dictionaries, running manual loops arent required. (look up dict_var.items())
+#     3. Add doc string 
+#     4. Add comments wherever issues were faced, so its not forgotten again
+#     5. can use raw sql queries for complex queries. Add dictionaries for parameters to prevent SQL injection
+#     6. Try keeping functions as short as possible
+
+
+
+
+
 
 # "28-01-2023":{
 #     "session_id": "kdhjkd",
