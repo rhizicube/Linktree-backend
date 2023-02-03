@@ -27,6 +27,7 @@ async def create(request:RequestSubscription, db:session=Depends(get_db)):
         print("Error")
         return ResponseSubscription(code=status.HTTP_400_BAD_REQUEST, status="BAD REQUEST", message=str(e)).dict(exclude_none=True)
 
+
 @subscription_router.get("/subscriptions/")
 async def get(id:int=None, db:session=Depends(get_db)):
     try:
@@ -42,6 +43,7 @@ async def get(id:int=None, db:session=Depends(get_db)):
     except Exception as e:
         return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)
 
+
 @subscription_router.put("/subscriptions/")
 async def update(id:int, request:UpdateSubscription, db:session=Depends(get_db)):
     try:
@@ -49,6 +51,7 @@ async def update(id:int, request:UpdateSubscription, db:session=Depends(get_db))
         return JSONResponse(content={"message": f"Subscription {id} updated"}, status_code=status.HTTP_200_OK)
     except Exception as e:
         return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)
+
 
 @subscription_router.delete("/subscriptions/")
 async def delete(id:int=None, db:session=Depends(get_db)):
@@ -58,6 +61,6 @@ async def delete(id:int=None, db:session=Depends(get_db)):
             return JSONResponse(content={"message": f"Subscription {id} deleted"}, status_code=status.HTTP_200_OK)
         else:
             deleted_rows = subscriptions.delete_all_subscriptions(db)
-            return JSONResponse(content={"message": "All subscriptions deleted"}, status_code=status.HTTP_200_OK)
+            return JSONResponse(content={"message": f"{deleted_rows} subscriptions deleted"}, status_code=status.HTTP_200_OK)
     except Exception as e:
         return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)

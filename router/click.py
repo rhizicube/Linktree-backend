@@ -25,7 +25,7 @@ async def get_click(id: str = None):
 		else:
 			_click = await clicks.get_all_clicks()
 		if not _click:
-			return JSONResponse(content={"message": "View record not found"}, status_code=status.HTTP_404_NOT_FOUND)
+			return JSONResponse(content={"message": "Click record not found"}, status_code=status.HTTP_404_NOT_FOUND)
 		res = json.loads(json_util.dumps(_click))
 		return JSONResponse(status_code=status.HTTP_200_OK, content=res)
 	except Exception as e:

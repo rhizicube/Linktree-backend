@@ -10,7 +10,7 @@ from db_connect.setup import get_db
 profile_router = APIRouter()
 
 
-@profile_router.post("/profile/")
+# @profile_router.post("/profile/")
 async def create(request:RequestProfile, db:session=Depends(get_db)):
 	"""API to create profile
 
@@ -29,7 +29,7 @@ async def create(request:RequestProfile, db:session=Depends(get_db)):
 			return JSONResponse(content={"message": f"Profile Link already exists"}, status_code=status.HTTP_400_BAD_REQUEST)
 		return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)
 
-@profile_router.get("/profile/")
+# @profile_router.get("/profile/")
 async def get(id:int=None, username:str=None, db:session=Depends(get_db)):
 	"""API to get profile
 
@@ -61,7 +61,7 @@ async def get(id:int=None, username:str=None, db:session=Depends(get_db)):
 		return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)
 
 
-@profile_router.put("/profile/")
+# @profile_router.put("/profile/")
 async def update(request:UpdateProfile, id:int=None, db:session=Depends(get_db)):
 	"""API to update profile
 
@@ -75,6 +75,8 @@ async def update(request:UpdateProfile, id:int=None, db:session=Depends(get_db))
 	"""
 	try:
 		_profile = profiles.update_profile(db, id, request.parameter.profile_bio, request.parameter.profile_name, request.parameter.profile_link)
+		if not _profile:
+			return JSONResponse(content={"message": f"Profile {id} not found"}, status_code=status.HTTP_404_NOT_FOUND)
 		return JSONResponse(content={"message": f"Profile {id} updated"}, status_code=status.HTTP_200_OK)
 	except Exception as e:
 		return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)
