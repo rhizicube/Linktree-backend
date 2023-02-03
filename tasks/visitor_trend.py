@@ -56,7 +56,8 @@ async def query_sample_view(profile, last_queried):
 	await connect_to_mongo()
 	# time ranges between the last timestamp which was queried, to the previous hour
 	start_time = last_queried.get("profile_last_queried_timestamp", None)
-	end_time = dt.strftime(dt.utcnow()-timedelta(hours=1), "%Y-%m-%dT%H:%M:%S")
+	end = dt.utcnow()-timedelta(hours=1)
+	end_time = dt.strftime(end.replace(minute=59, second=59), "%Y-%m-%dT%H:%M:%S") # Get the very last second of the previous hour
 	profile_views = await views.get_views_by_profile_datetime_range(profile.id, start_time, end_time)
 	if len(profile_views) == 0:
 		return
