@@ -199,25 +199,37 @@ analysis_router = APIRouter()
 @analysis_router.get("/analysis/")
 async def get(id: int, start: dt, end: dt, db: session = Depends(get_db)):
     try:
+        if not start or not end:
+            return JSONResponse(content={"message": f"Date range should be provided"}, status_code=status.HTTP_400_BAD_REQUEST)
+
         with postgre_engine.connect() as conn:
             query = f"SELECT * FROM ViewsResample WHERE profile_id = {id} AND view_sampled_timestamp BETWEEN '{start}' AND '{end}'"
             views_table = conn.execute(query)
         _views_df = pd.DataFrame(views_table.fetchall())
-        _views_df.columns = views_table.keys()
-        view_ids = []
-        for view in _views_df["id"]:
-            view_ids.append(view)
+        if _views_df.empty:
+            return JSONResponse(content={"message": f"No data found for the specified date range"}, status_code=status.HTTP_404_NOT_FOUND)
+        # _views_df.columns = views_table.keys() # not needed
+        view_ids = list(_views_df["id"]) # gives the same output as below
+        # for view in _views_df["id"]:
+        #     view_ids.append(view)
         _views_df["view_sampled_timestamp"] = pd.to_datetime(_views_df["view_sampled_timestamp"])
         _views_table = pd.pivot_table(_views_df, values='view_count', index=['view_sampled_timestamp'], columns=['session_id']).fillna(0)
         views_table = _views_table.resample('D').sum()
-        views_table = views_table.reset_index()
-        views_table["view_sampled_timestamp"] = views_table["view_sampled_timestamp"].dt.strftime('%Y-%m-%d')
-        views_response_data = json.loads(views_table.to_json(orient='records'))
+        fieldnames = views_table.columns
+        # views_table = views_table.reset_index()
+        views_table.index = views_table.index.strftime('%Y-%m-%d')
+        views_response_data = {}
+        # gives a cleaner response structure
+        for index, row in views_table.iterrows():
+            views_response_data[index] = []
+            for session in fieldnames:
+                views_response_data[index].append({"session_id": session, "view_count": int(row[session])})
+        # views_response_data = json.loads(views_table.to_json(orient='records'))
         # Use dict_variable.items() to iterate through the dictionary
-        for i in range(len(views_response_data)):
-            for k,v in views_response_data[i].items():
-                if k!= "view_sampled_timestamp":
-                    views_response_data[i][k] = {"session_id": k, "view_count": v}
+        # for i in range(len(views_response_data)):
+        #     for k,v in views_response_data[i].items():
+        #         if k!= "view_sampled_timestamp":
+        #             views_response_data[i][k] = {"session_id": k, "view_count": v}
         _clicks = []
         _clicks_df = pd.DataFrame()
         with postgre_engine.connect() as conn:
@@ -233,20 +245,25 @@ async def get(id: int, start: dt, end: dt, db: session = Depends(get_db)):
             _click_df.columns = clicks_table.keys()
             _clicks_df = _clicks_df.append(_click_df)
         _clicks_df["click_sampled_timestamp"] = pd.to_datetime(_clicks_df["click_sampled_timestamp"])
-        _clicks_table = pd.pivot_table(_clicks_df, values='click_count', index=['click_sampled_timestamp'], columns=['view_id']).fillna(0)
-        clicks_table = _clicks_table.resample('D').sum()
-        clicks_table = clicks_table.reset_index()
-        clicks_table["click_sampled_timestamp"] = clicks_table["click_sampled_timestamp"].dt.strftime('%Y-%m-%d')
-        clicks_response_data = json.loads(clicks_table.to_json(orient='records'))
-        # Use dict_variable.items() to iterate through the dictionary
-        for i in range(len(clicks_response_data)):
-            for k,v in clicks_response_data[i].items():
-                if k!= "click_sampled_timestamp":
-                    clicks_response_data[i][k] = {"view_id": k, "click_count": v}
-        if start != None and end != None:
-            # return views_response_data and clicks_response_data between start and end
-            start = start.strftime('%Y-%m-%d')
-            end = end.strftime('%Y-%m-%d')
-            return JSONResponse(content={"message": {"views": views_response_data, "clicks": clicks_response_data}}, status_code=status.HTTP_200_OK)
-    except:
-        return JSONResponse(content={"message": f"Profile {id} not found"}, status_code=status.HTTP_404_NOT_FOUND)
+        # dataframe needs to be grouped by unique date and view to get their corresponding counts
+        clicks_grouped_by_date = _clicks_df.groupby([_clicks_df.click_sampled_timestamp.dt.date, _clicks_df.view_id])["click_count"].sum()
+        clicks_response_data = {}
+        for index, row in clicks_grouped_by_date.items():
+            if index[0].strftime('%Y-%m-%d') in clicks_response_data.keys():
+                clicks_response_data[index[0].strftime('%Y-%m-%d')].append({"view_id": index[1], "click_count": row})
+            else:
+                clicks_response_data[index[0].strftime('%Y-%m-%d')] = [{"view_id": index[1], "click_count": row}]
+        # _clicks_table = pd.pivot_table(_clicks_df, values='click_count', index=['click_sampled_timestamp'], columns=['view_id']).fillna(0)
+        # clicks_table = _clicks_table.resample('D').sum()
+        # clicks_table = clicks_table.reset_index()
+        # clicks_table["click_sampled_timestamp"] = clicks_table["click_sampled_timestamp"].dt.strftime('%Y-%m-%d')
+        # clicks_response_data = json.loads(clicks_table.to_json(orient='records'))
+        # # Use dict_variable.items() to iterate through the dictionary
+        # for i in range(len(clicks_response_data)):
+        #     for k,v in clicks_response_data[i].items():
+        #         if k!= "click_sampled_timestamp":
+        #             clicks_response_data[i][k] = {"view_id": k, "click_count": v}
+        
+        return JSONResponse(content={"message": {"views": views_response_data, "clicks": clicks_response_data}}, status_code=status.HTTP_200_OK)
+    except Exception as e:
+        return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)
