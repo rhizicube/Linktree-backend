@@ -1,4 +1,5 @@
-from celery import shared_task
+from celery import shared_task, current_app
+from core.settings import settings
 from datetime import datetime as dt, timedelta
 from crud import profiles, clicks, clicks_resample, views, views_resample, links
 from sqlalchemy.orm import session
@@ -9,6 +10,18 @@ import json
 from utilities.views import get_ip_location
 from asgiref.sync import async_to_sync
 from db_connect.setup import connect_to_mongo, close_mongo_connection
+
+
+celery_app = current_app
+celery_app.config_from_object(settings, namespace='CELERY')
+celery_app.conf.update(task_track_started=True)
+celery_app.conf.update(task_serializer='pickle')
+celery_app.conf.update(result_serializer='pickle')
+celery_app.conf.update(accept_content=['pickle', 'json'])
+celery_app.conf.update(result_expires=200)
+celery_app.conf.update(result_persistent=True)
+celery_app.conf.update(worker_send_task_events=False)
+celery_app.conf.update(worker_prefetch_multiplier=1)
 
 
 
@@ -87,8 +100,9 @@ async def query_sample_view(profile, last_queried):
 	await close_mongo_connection()
 
 
-@shared_task(bind=True,autoretry_for=(Exception,), retry_backoff=True, retry_kwargs={"max_retries": 5})#,name='trials:trial')
-def query_sample_view_clicks(self, profile, last_queried):
+# @shared_task(bind=True,autoretry_for=(Exception,), retry_backoff=True, retry_kwargs={"max_retries": 5})#,name='trials:trial')
+@celery_app.task(name="analytics:query_sample_view_clicks")
+def query_sample_view_clicks(profile, last_queried):
 	"""Task to run all the async functionalities for each profile separately
 
 	Args:
@@ -98,8 +112,9 @@ def query_sample_view_clicks(self, profile, last_queried):
 	async_to_sync(query_sample_view)(profile, last_queried)
 
 
-@shared_task(bind=True,autoretry_for=(Exception,), retry_backoff=True, retry_kwargs={"max_retries": 5})
-def save_visitor_sampled_data(self):
+# @shared_task(bind=True,autoretry_for=(Exception,), retry_backoff=True, retry_kwargs={"max_retries": 5})
+@celery_app.task(name="analytics:save_visitor_sampled_data")
+def save_visitor_sampled_data():
 	"""Scheduled task to sample raw data from clicks and views from MongoDB and store it in PostgreSQL
 	"""
 	# As FastAPI isnt used directly, SQL DB session needs to be opened/closed separately
