@@ -2,8 +2,7 @@ from fastapi import FastAPI, APIRouter
 import schemas.models as models
 import uvicorn
 from db_connect.config import postgre_engine
-from router import profile, link, user_profile, setting, view, click, profileDetails
-# from router import user_profile, profileDetails
+from router import profile, link, user_profile, setting, view, click, profileDetails, analytics, click_resample
 from db_connect.setup import connect_to_mongo, close_mongo_connection
 from celery_config.celery_utils import create_celery
 from fastapi.middleware.cors import CORSMiddleware
@@ -18,8 +17,10 @@ def include_routers():
 	main_router.include_router(setting.setting_router, prefix="/api/settings", tags=["setting"])
 	main_router.include_router(user_profile.router, prefix="/api", tags=["Visitor"])
 	main_router.include_router(profileDetails.profile_detail_router, prefix='/api/profile', tags=["User"])
-	# main_router.include_router(view.view_router, tags=["View"])
-	# main_router.include_router(click.click_router, tags=["Click"])
+	# main_router.include_router(view.view_router, prefix='/api/views', tags=["View"])
+	# main_router.include_router(click.click_router, prefix='/api/clicks', tags=["Click"])
+	main_router.include_router(analytics.analytics_router, prefix='/analytics', tags=["Analytics"])
+	# main_router.include_router(click_resample.click_router, prefix='/api/clicksresample', tags=["ClickResample"])
 
 
 def create_app() -> FastAPI:
