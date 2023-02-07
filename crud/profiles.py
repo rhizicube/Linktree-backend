@@ -187,3 +187,35 @@ def update_profile_image(db:session, id:int, file:UploadFile=File(...)):
 	db.commit()
 	db.refresh(_profile)
 	return _profile
+
+def create_temp_profile_link(username:str):
+	"""Function to create temporary profile link
+
+	Args:
+		username (str): username
+
+	Returns:
+		str: returns profile link
+	"""
+	profile_link = "empty_profile" + username
+	return profile_link
+
+# create empty profile if image is uploaded without profile information
+def create_empty_profile(username:str, db:session, file:UploadFile=File(...)):
+	"""Function to create empty profile
+
+	Args:
+		db (session): DB connection session for ORM functionalities
+
+	Returns:
+		orm query set: returns created profile
+	"""
+	# profile_link = "empty_profile" + username
+	temp_profile = create_temp_profile_link(username)
+	img_path = save_uploaded_image(file)
+	_profile = Profile(profile_image_path=img_path, username=username, profile_name=temp_profile, profile_link=temp_profile, profile_bio="")
+	db.add(_profile)
+	db.commit()
+	db.refresh(_profile)
+	return _profile
+	

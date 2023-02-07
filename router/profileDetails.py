@@ -32,6 +32,11 @@ async def get(username:str, db:session=Depends(get_db)):
 			# Can be converted to json format together
 			resp_data = {"profile":_profile, "link":_links, "settings":_settings}
 			resp_data = jsonable_encoder(resp_data)
+			# if profile_link has "empty_profile" in it, remove it
+			if resp_data["profile"]["profile_link"][:13] == "empty_profile":
+				resp_data["profile"]["profile_link"] = None
+			if resp_data["profile"]["profile_name"][:13] == "empty_profile":
+				resp_data["profile"]["profile_name"] = None
 			return JSONResponse(status_code=status.HTTP_200_OK, content={"data": resp_data})
 		else:
 			return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content={"message":"Username is required"})
