@@ -201,11 +201,8 @@ async def get(id: int, start: dt, end: dt, db: session = Depends(get_db)):
     try:
         if not start or not end:
             return JSONResponse(content={"message": f"Date range should be provided"}, status_code=status.HTTP_400_BAD_REQUEST)
-
-        with postgre_engine.connect() as conn:
-            query = f"SELECT * FROM ViewsResample WHERE profile_id = {id} AND view_sampled_timestamp BETWEEN '{start}' AND '{end}'"
-            views_table = conn.execute(query)
-        _views_df = pd.DataFrame(views_table.fetchall())
+        views = db.execute("SELECT * FROM ViewsResample WHERE profile_id = :id AND view_sampled_timestamp BETWEEN :start AND :end", {"id": id, "start": start, "end": end})
+        _views_df = pd.DataFrame(views.fetchall())
         if _views_df.empty:
             return JSONResponse(content={"message": f"No data found for the specified date range"}, status_code=status.HTTP_404_NOT_FOUND)
         # _views_df.columns = views_table.keys() # not needed
@@ -230,20 +227,20 @@ async def get(id: int, start: dt, end: dt, db: session = Depends(get_db)):
         #     for k,v in views_response_data[i].items():
         #         if k!= "view_sampled_timestamp":
         #             views_response_data[i][k] = {"session_id": k, "view_count": v}
-        _clicks = []
-        _clicks_df = pd.DataFrame()
-        with postgre_engine.connect() as conn:
-            query = f"SELECT * FROM ClicksResample WHERE view_id = {view_ids[0]} AND click_sampled_timestamp BETWEEN '{start}' AND '{end}'"
-            clicks_table = conn.execute(query)
-        _clicks_df = pd.DataFrame(clicks_table.fetchall())
-        _clicks_df.columns = clicks_table.keys()
-        for view_id in view_ids[1:]:
-            with postgre_engine.connect() as conn:
-                query = f"SELECT * FROM ClicksResample WHERE view_id = {view_id} AND click_sampled_timestamp BETWEEN '{start}' AND '{end}'"
-                clicks_table = conn.execute(query)
-            _click_df = pd.DataFrame(clicks_table.fetchall())
-            _click_df.columns = clicks_table.keys()
-            _clicks_df = _clicks_df.append(_click_df)
+        # with postgre_engine.connect() as conn:
+        #     query = f"SELECT * FROM ClicksResample WHERE view_id = {view_ids[0]} AND click_sampled_timestamp BETWEEN '{start}' AND '{end}'"
+        #     clicks_table = conn.execute(query)
+        # _clicks_df = pd.DataFrame(clicks_table.fetchall())
+        # _clicks_df.columns = clicks_table.keys()
+        # for view_id in view_ids[1:]:
+        #     with postgre_engine.connect() as conn:
+        #         query = f"SELECT * FROM ClicksResample WHERE view_id = {view_id} AND click_sampled_timestamp BETWEEN '{start}' AND '{end}'"
+        #         clicks_table = conn.execute(query)
+        #     _click_df = pd.DataFrame(clicks_table.fetchall())
+        #     _click_df.columns = clicks_table.keys()
+        #     _clicks_df = _clicks_df.append(_click_df)
+        clicks = db.execute("SELECT * FROM ClicksResample, ViewsResample WHERE ViewsResample.id = ClicksResample.view_id AND view_id in :views_list AND click_sampled_timestamp BETWEEN :start AND :end", {"views_list": tuple(view_ids), "start": start, "end": end})
+        _clicks_df = pd.DataFrame(clicks.fetchall())
         _clicks_df["click_sampled_timestamp"] = pd.to_datetime(_clicks_df["click_sampled_timestamp"])
         # dataframe needs to be grouped by unique date and view to get their corresponding counts
         clicks_grouped_by_date = _clicks_df.groupby([_clicks_df.click_sampled_timestamp.dt.date, _clicks_df.view_id])["click_count"].sum()
@@ -253,16 +250,6 @@ async def get(id: int, start: dt, end: dt, db: session = Depends(get_db)):
                 clicks_response_data[index[0].strftime('%Y-%m-%d')].append({"view_id": index[1], "click_count": row})
             else:
                 clicks_response_data[index[0].strftime('%Y-%m-%d')] = [{"view_id": index[1], "click_count": row}]
-        # _clicks_table = pd.pivot_table(_clicks_df, values='click_count', index=['click_sampled_timestamp'], columns=['view_id']).fillna(0)
-        # clicks_table = _clicks_table.resample('D').sum()
-        # clicks_table = clicks_table.reset_index()
-        # clicks_table["click_sampled_timestamp"] = clicks_table["click_sampled_timestamp"].dt.strftime('%Y-%m-%d')
-        # clicks_response_data = json.loads(clicks_table.to_json(orient='records'))
-        # # Use dict_variable.items() to iterate through the dictionary
-        # for i in range(len(clicks_response_data)):
-        #     for k,v in clicks_response_data[i].items():
-        #         if k!= "click_sampled_timestamp":
-        #             clicks_response_data[i][k] = {"view_id": k, "click_count": v}
         
         return JSONResponse(content={"message": {"views": views_response_data, "clicks": clicks_response_data}}, status_code=status.HTTP_200_OK)
     except Exception as e:
