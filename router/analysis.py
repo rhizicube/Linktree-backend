@@ -197,7 +197,7 @@ analysis_router = APIRouter()
 #     except:
 #         return JSONResponse(content={"message": f"Profile {id} not found"}, status_code=status.HTTP_404_NOT_FOUND)
 ## return count of  views and clicks using pandas
-@analysis_router.get("/analytics/getactivitycountbyfrequency/{id}")
+@analysis_router.get("/analytics/getactivitycountbyfrequency/")
 async def get(id: int, start: dt, end: dt, db: session = Depends(get_db)):
     try:
         if not start or not end:
