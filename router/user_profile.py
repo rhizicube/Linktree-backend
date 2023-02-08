@@ -94,10 +94,11 @@ async def get_user_profile(url:str, request:Request, db:session=Depends(get_db))
 			# given URL is a custom link. All profile details (profile, links, settings) linked to the custom link is sent back as response
 			resp_data, response_cookie = await get_user_profile_details(url, request, db)
 			resp_data = jsonable_encoder(resp_data)
+			if "empty" in resp_data["profile"]["profile_name"]:
+				resp_data["profile"]["profile_name"] = ""
 			response = JSONResponse(content={"data": resp_data}, status_code=status.HTTP_200_OK)
 			if response_cookie:
 				response.set_cookie(key="linktree_visitor", value=response_cookie, expires=100)
 			return response
 	except Exception as e:
 		return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)
-
