@@ -3,6 +3,7 @@ import os
 from celery.schedules import crontab
 from dotenv import load_dotenv
 from pathlib import Path
+from kombu import Queue
 
 dotenv_path = Path(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".backend.env"))
 load_dotenv(dotenv_path=dotenv_path)
@@ -24,12 +25,12 @@ def get_celery_beat_scheduled_tasks():
 		}
 	if os.getenv('ENABLE_VISITOR_TREND', "No") == "Yes":
 		scheduled_tasks['visitor_view_click_trend'] = {
-			'task': 'tasks.visitor_trend.save_visitor_sampled_data',
+			'task': 'analytics:save_visitor_sampled_data',
 			'schedule': crontab(
-				minute="*/2", 
-				hour="*",
-				day_of_month="*",
-				month_of_year="*"
+				minute=os.getenv('VISITOR_TREND_MINUTE', "*"), 
+				hour=os.getenv('VISITOR_TREND_HOUR', "*"),
+				day_of_month=os.getenv('VISITOR_TREND_DAY', "*"),
+				month_of_year=os.getenv('VISITOR_TREND_MONTH', "*")
 				),
 		}
 	
@@ -75,6 +76,13 @@ class Settings(BaseSettings):
 	CELERY_BROKER_URL: str = os.environ.get("CELERY_BROKER_URL", f"amqp://{AMQP_USER}:{AMQP_PASS}@{AMQP_HOST}:{AMQP_PORT}//")
 	CELERY_RESULT_BACKEND: str = os.environ.get("CELERY_RESULT_BACKEND", "rpc://")
 	CELERY_BEAT_SCHEDULE = get_celery_beat_scheduled_tasks()
+	CELERY_TASK_QUEUES: list = (
+		# default queue
+		Queue("celery"),
+		# custom queue
+		Queue("tasks"),
+		Queue("analytics"),
+	)
 
 	
 
