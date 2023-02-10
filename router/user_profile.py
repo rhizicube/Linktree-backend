@@ -4,7 +4,7 @@ from sqlalchemy.orm import session
 import crud.profiles as profiles, crud.links as links, crud.settings as settings, crud.views as views, crud.clicks as clicks
 from utilities.views import create_cookie_id, get_client_details
 from fastapi.encoders import jsonable_encoder
-
+import os
 
 from db_connect.setup import get_db
 
@@ -86,7 +86,7 @@ async def get_user_profile(url:str, request:Request, db:session=Depends(get_db))
 			# given URL is a tiny/shortened link. API needs to redirect to the original link to which the tiny link is pointed to
 			link_to_redirect = links.get_link_by_tiny_url(url, db)
 			response_cookie = await save_click(url, request)
-			response = RedirectResponse(link_to_redirect)
+			response = RedirectResponse(link_to_redirect.link_url)
 			if response_cookie:
 				response.set_cookie(key="linktree_visitor", value=response_cookie, expires=100)
 			return response
@@ -94,6 +94,8 @@ async def get_user_profile(url:str, request:Request, db:session=Depends(get_db))
 			# given URL is a custom link. All profile details (profile, links, settings) linked to the custom link is sent back as response
 			resp_data, response_cookie = await get_user_profile_details(url, request, db)
 			resp_data = jsonable_encoder(resp_data)
+			if resp_data["profile"]["profile_image_path"] and os.path.exists(resp_data["profile"]["profile_image_path"]):
+				resp_data["profile"]["profile_image_path"] = "media" + resp_data["profile"]["profile_image_path"].split("media")[-1]
 			response = JSONResponse(content={"data": resp_data}, status_code=status.HTTP_200_OK)
 			if response_cookie:
 				response.set_cookie(key="linktree_visitor", value=response_cookie, expires=100)

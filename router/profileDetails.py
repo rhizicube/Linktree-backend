@@ -9,6 +9,7 @@ from fastapi.encoders import jsonable_encoder
 from schemas.links import LinkSchema
 from schemas.settings import SettingSchema
 from schemas.profiles import ProfileSchema
+import os
 
 from db_connect.setup import get_db
 
@@ -34,6 +35,8 @@ async def get(username:str, db:session=Depends(get_db)):
 			# Can be converted to json format together
 			resp_data = {"profile":_profile, "link":_links, "settings":_settings}
 			resp_data = jsonable_encoder(resp_data)
+			if resp_data["profile"]["profile_image_path"] and os.path.exists(resp_data["profile"]["profile_image_path"]):
+				resp_data["profile"]["profile_image_path"] = "media" + resp_data["profile"]["profile_image_path"].split("media")[-1]
 			return JSONResponse(status_code=status.HTTP_200_OK, content={"data": resp_data})
 		else:
 			return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content={"message":"Username is required"})
@@ -57,7 +60,9 @@ async def create(username:str, request: Dict[Any, Any], db:session=Depends(get_d
 				profile = ProfileSchema(**request["profile"])
 				_profile = profiles.create_profile(db, profile)
 				print(profile)
-				response_data["profile"] = jsonable_encoder(_profile)
+			response_data["profile"] = jsonable_encoder(_profile)
+			if response_data["profile"]["profile_image_path"] and os.path.exists(response_data["profile"]["profile_image_path"]):
+				response_data["profile"]["profile_image_path"] = "media" + response_data["profile"]["profile_image_path"].split("media")[-1]
 			if request.get("link", None) is not None:
 				if type(request["link"]) == list:
 					resp_links = []
