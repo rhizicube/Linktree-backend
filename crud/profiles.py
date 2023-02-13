@@ -190,3 +190,27 @@ def update_profile_image(db:session, id:int, file:UploadFile=File(...)):
 	db.commit()
 	db.refresh(_profile)
 	return _profile
+
+
+def delete_profile_image(db:session, id:int=None, uname:str=None):
+	"""Function to delete profile image from DB
+
+	Args:
+		db (session): DB connection session for ORM functionalities
+		id (int, optional): profile id. Defaults to None.
+		uname (str, optional): User name. Defaults to None.
+
+	Returns:
+		orm query set: returns updated profile
+	"""
+	if id:
+		_profile = get_profile_by_id(db, id)
+	else:
+		_profile = get_profile_by_user(db, uname)
+	if _profile.profile_image_path not in [None, ""]:
+		os.remove(_profile.profile_image_path)
+	_profile.profile_image_path = None
+
+	db.commit()
+	db.refresh(_profile)
+	return _profile

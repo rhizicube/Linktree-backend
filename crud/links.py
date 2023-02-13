@@ -184,6 +184,26 @@ def update_link_image(db:session, id:int, file:UploadFile=File(...)):
 	return _link
 
 
+def delete_link_image(db:session, id:int):
+	"""Function to delete link's thumbnail
+
+	Args:
+		db (session): DB connection session for ORM functionalities
+		id (int): Link id, pk
+
+	Returns:
+		orm query set: returns updated link
+	"""
+	_link = get_link_by_id(db, id)
+	if _link.link_thumbnail not in [None, ""]:
+		os.remove(_link.link_thumbnail)
+	_link.link_thumbnail = None
+	
+	db.commit()
+	db.refresh(_link)
+	return _link
+
+
 def get_all_tiny_links(db:session):
 	"""Function to get all the tiny/shortened links
 
@@ -208,4 +228,4 @@ def get_link_by_tiny_url(url:str, db:session):
 	Returns:
 		str: Link having the tiny url
 	"""
-	return db.query(Link).filter_by(link_tiny=url).first()#.link_url
+	return db.query(Link).filter_by(link_tiny=url).first()

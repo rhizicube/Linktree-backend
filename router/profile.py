@@ -3,6 +3,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.orm import session
 from schemas.profiles import RequestProfile, ResponseProfile, UpdateProfile
 import crud.profiles as profiles
+from fastapi.encoders import jsonable_encoder
 
 
 from db_connect.setup import get_db
@@ -118,5 +119,25 @@ async def update_image(file:UploadFile=File(...), id:int=None, db:session=Depend
 	try:
 		_profile = profiles.update_profile_image(db, id, file)
 		return JSONResponse(content={"message": f"Profile {id} updated"}, status_code=status.HTTP_200_OK)
+	except Exception as e:
+		return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)
+
+@profile_router.delete("/profile/image/")
+async def update_image(id:int=None, username:str=None, db:session=Depends(get_db)):
+	"""API to delete profile image
+
+	Args:
+		id (int, optional): profile id, pk. Defaults to None.
+		db (session, optional): DB connection session for db functionalities. Defaults to Depends(get_db).
+
+	Returns:
+		JSONResponse: Profile updated with 200 status if profile is updated, else exception text with 400 status
+	"""
+	try:
+		if id:
+			_profile = profiles.delete_profile_image(db, id=id)
+		elif username:
+			_profile = profiles.delete_profile_image(db, uname=username)
+		return JSONResponse(content={"message": f"Profile {id} updated", "data": jsonable_encoder(_profile)}, status_code=status.HTTP_200_OK)
 	except Exception as e:
 		return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)

@@ -3,7 +3,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.orm import session
 from schemas.links import RequestLink, ResponseLink, UpdateLink
 import crud.links as links
-
+from fastapi.encoders import jsonable_encoder
 
 from db_connect.setup import get_db
 
@@ -101,6 +101,7 @@ async def delete(id:int=None, db:session=Depends(get_db)):
 	except Exception as e:
 		return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)
 
+
 @link_router.put("/link/thumbnail/")
 async def update_image(file:UploadFile=File(...), id:int=None, db:session=Depends(get_db)):
 	"""API to update link with thumbnail
@@ -108,7 +109,7 @@ async def update_image(file:UploadFile=File(...), id:int=None, db:session=Depend
 	Args:
 		file (UploadFile, optional): Link thumbnail. Defaults to File(...).
 		id (int, optional): Link id, pk. Defaults to None.
-		db (session, optional): _description_. Defaults to Depends(get_db).
+		db (session, optional): DB connection session for db functionalities. Defaults to Depends(get_db).
 
 	Returns:
 		JSONResponse: Link updated with 200 status if link is updated, else exception text with 400 status
@@ -116,5 +117,23 @@ async def update_image(file:UploadFile=File(...), id:int=None, db:session=Depend
 	try:
 		_link = links.update_link_image(db, id, file)
 		return JSONResponse(content={"message": f"Link {id} updated"}, status_code=status.HTTP_200_OK)
+	except Exception as e:
+		return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)
+
+
+@link_router.delete("/link/thumbnail/")
+async def update_image(id:int=None, db:session=Depends(get_db)):
+	"""API to delete link's thumbnail
+
+	Args:
+		id (int, optional): Link id, pk. Defaults to None.
+		db (session, optional): DB connection session for db functionalities. Defaults to Depends(get_db).
+
+	Returns:
+		JSONResponse: Link updated with 200 status if link is updated, else exception text with 400 status
+	"""
+	try:
+		_link = links.delete_link_image(db, id)
+		return JSONResponse(content={"message": f"Link {id} updated", "data": jsonable_encoder(_link)}, status_code=status.HTTP_200_OK)
 	except Exception as e:
 		return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)
