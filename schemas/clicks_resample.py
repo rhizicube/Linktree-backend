@@ -10,6 +10,7 @@ class ClicksResampleSchema(BaseModel):
     click_count: int
     view_id:int
     link_id:int
+    click_sampled_timestamp: str
     class Config:
         orm_mode=True
 

@@ -33,11 +33,16 @@ async def get(id:int=None, db:session=Depends(get_db)):
 
 @view_router.put("/view/")
 async def update(request:UpdateView, id:int=None, db:session=Depends(get_db)):
-	try:
-		_view = views_resample.update_view(db, request.parameter, id)
-		return JSONResponse(content={"message": f"View {id} updated"}, status_code=status.HTTP_200_OK)
-	except Exception as e:
-		return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)
+    if id:
+        try:
+            view_id = views_resample.get_view_by_id(db, id)
+            if view_id is not None:
+                _view = views_resample.update_view(db, request.parameter, id)
+                return JSONResponse(content={"message": f"View {id} updated"}, status_code=status.HTTP_200_OK)
+            else:
+                return JSONResponse(content={"message": f"View {id} not found"}, status_code=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+        	return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)
 
 @view_router.delete("/view/")
 async def delete(id:int=None, db:session=Depends(get_db)):

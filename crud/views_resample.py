@@ -3,7 +3,6 @@ from schemas.models import ViewsResample
 from schemas.views_resample import ViewsResampleSchema as ViewSchema
 from fastapi import HTTPException
 from datetime import datetime as dt
-from sqlalchemy import func
 from typing import List
 
 
@@ -32,6 +31,20 @@ def get_view_by_id(db:session, id:int):
 	"""
 	return db.query(ViewsResample).get(id)
 
+def get_views_by_profile_id(db:session, profile_id:int, skip:int=0, limit:int=100):
+    """Function to get views for the given profile id
+
+    Args:
+        db (session): DB connection session for ORM functionalities
+        profile_id (int): profile id
+        skip (int, optional): To skip X number of rows from beginning. Defaults to 0.
+        limit (int, optional): Limit number of rows to be queried. Defaults to 100.
+
+    Returns:
+        orm query set: returns the queried views
+    """
+    return db.query(ViewsResample).filter(ViewsResample.profile_id == profile_id).offset(skip).limit(limit).all()
+
 def create_view(db:session, view:ViewSchema):
 	"""Function to create view
 
@@ -42,7 +55,7 @@ def create_view(db:session, view:ViewSchema):
 	Returns:
 		orm query set: returns the created view
 	"""
-	_view = ViewsResample(session_id=view.session_id, view_count=view.view_count, device_type=view.device_type, profile_id=view.profile)
+	_view = ViewsResample(session_id=view.session_id, view_count=view.view_count, device_type=view.device_type, profile_id=view.profile, view_sampled_timestamp=view.view_sampled_timestamp)
 	db.add(_view)
 	db.commit()
 	db.refresh(_view)
