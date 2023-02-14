@@ -2,8 +2,9 @@ from sqlalchemy.orm import session
 from schemas.models import Link
 from schemas.links import LinkSchema
 from .profiles import get_profile_by_id
-from fastapi import HTTPException, UploadFile, File
+from fastapi import HTTPException, UploadFile
 import secrets, os, string
+from core.settings import settings
 from utilities.generic import save_uploaded_image
 
 
@@ -161,7 +162,7 @@ def update_link(db:session, id:int, link_enable:bool=None, link_name:str=None, l
 	return _link
 
 
-def update_link_image(db:session, id:int, file:UploadFile=File(...)):
+def update_link_image(db:session, id:int, file:UploadFile=None, icon:str=None):
 	"""Function to update link's thumbnail
 
 	Args:
@@ -172,10 +173,12 @@ def update_link_image(db:session, id:int, file:UploadFile=File(...)):
 	Returns:
 		orm query set: returns updated link
 	"""
-	print(type(file))
 	_link = get_link_by_id(db, id)
-	img_path = save_uploaded_image(file)
-	if _link.link_thumbnail not in [None, ""]:
+	if file:
+		img_path = save_uploaded_image(file)
+	else:
+		img_path = os.path.join(settings.BASE_DIR, icon)
+	if _link.link_thumbnail not in [None, ""] and "icons" not in _link.link_thumbnail:
 		os.remove(_link.link_thumbnail)
 	_link.link_thumbnail = img_path
 	
@@ -195,7 +198,7 @@ def delete_link_image(db:session, id:int):
 		orm query set: returns updated link
 	"""
 	_link = get_link_by_id(db, id)
-	if _link.link_thumbnail not in [None, ""]:
+	if _link.link_thumbnail not in [None, ""] and "icons" not in _link.link_thumbnail:
 		os.remove(_link.link_thumbnail)
 	_link.link_thumbnail = None
 	
