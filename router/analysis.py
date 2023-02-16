@@ -1,19 +1,11 @@
 from fastapi import APIRouter, Depends, status
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import session
-import crud.clicks_resample as clicks_resample
-import crud.views_resample as views_resample
-from crud.profiles import get_profile_by_id
 from db_connect.setup import get_db
-from db_connect.config import postgre_engine
 from datetime import datetime as dt
-from sqlalchemy import inspect
 from crud import profiles
 import json
-import numpy as np
-import pandas as pd
-from utilities.analysis import get_views_and_clicks, get_unique_views_and_clicks, get_activity
-from fastapi.encoders import jsonable_encoder
+from utilities.analysis import get_activity
 
 analysis_router = APIRouter()
 
@@ -528,7 +520,7 @@ async def get(username:str, db:session=Depends(get_db)):
         # ctr = total_clicks/total_views
         ctr=0
         if total_views != 0 and total_clicks != 0:
-            ctr = round(total_clicks/total_views, 3)
+            ctr = round(total_clicks/total_views*100, 3)
         return JSONResponse(content={"data": {"views": total_views, "clicks": total_clicks, "ctr": ctr}}, status_code=status.HTTP_200_OK)
     except Exception as e:
         return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)
