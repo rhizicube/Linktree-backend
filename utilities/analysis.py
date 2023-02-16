@@ -105,7 +105,15 @@ def get_activity(username: str, start: dt, end: dt, freq: str, db : session = ge
         views = db.execute("SELECT id, session_id, view_count, view_sampled_timestamp FROM ViewsResample WHERE ViewsResample.profile_id = :profile_id AND view_sampled_timestamp BETWEEN :start AND :end", {"profile_id": profile_id, "start": start, "end": end})
         _views_df = pd.DataFrame(views.fetchall())
         if _views_df.empty:
-            return JSONResponse(content={"message": f"No data found for the specified date range"}, status_code=status.HTTP_404_NOT_FOUND)
+            if freq=="daily":
+                freq='D'
+            elif freq=="weekly":
+                freq='W'
+            elif freq=="monthly":
+                freq='M'
+            response_data = pd.DataFrame(columns=["total_views", "total_clicks", "unique_views", "unique_clicks", "ctr"], index=pd.date_range(start=start, end=end, freq=freq))
+            response_data = response_data.fillna(0)
+            return response_data
         _views_df["view_sampled_timestamp"] = pd.to_datetime(_views_df["view_sampled_timestamp"])
         _views_df = _views_df.set_index("view_sampled_timestamp")
         # print(_views_df)
@@ -119,19 +127,10 @@ def get_activity(username: str, start: dt, end: dt, freq: str, db : session = ge
             year = dt.now().strftime("%Y")
             views_grouped_by_date = _views_df.groupby(_views_df.index.month)["view_count"].sum()
             views_grouped_by_date.index = views_grouped_by_date.index.map(lambda x: dt.strptime(f"{year}-{x}-1", "%Y-%m-%d"))
-        else:
-            return JSONResponse(content={"message": f"Invalid frequency"}, status_code=status.HTTP_400_BAD_REQUEST)
         views_grouped_by_date = views_grouped_by_date.reset_index()
         # rename index to date
         views_grouped_by_date = views_grouped_by_date.rename(columns={"index": "date", "view_count": "total_views", "view_sampled_timestamp": "date"})
         print(views_grouped_by_date)
-        # convert views_grouped_by_date as {"data":[{"date": "2021-01-01", "total_views": 10}, {"date": "2021-01-02", "total_views": 20}}]} using pandas by changing the index
-        # views_response_data = {}
-        # views_response_data["data"] = []
-        # for index, row in views_grouped_by_date.items():
-        #     views_response_data["data"].append({"date": index, "total_views": row})
-        # print(views_response_data)
-        # get unique views
         if freq == "daily":
             unique_views_grouped_by_date = _views_df.groupby(_views_df.index.date)["session_id"].nunique()
         elif freq == "weekly":
@@ -142,19 +141,22 @@ def get_activity(username: str, start: dt, end: dt, freq: str, db : session = ge
             year = dt.now().strftime("%Y")
             unique_views_grouped_by_date = _views_df.groupby(_views_df.index.month)["session_id"].nunique()
             unique_views_grouped_by_date.index = unique_views_grouped_by_date.index.map(lambda x: dt.strptime(f"{year}-{x}-1", "%Y-%m-%d"))
-        else:
-            return JSONResponse(content={"message": f"Invalid frequency"}, status_code=status.HTTP_400_BAD_REQUEST)
         unique_views_grouped_by_date = unique_views_grouped_by_date.reset_index()
         # rename session_id to unique_views
         unique_views_grouped_by_date = unique_views_grouped_by_date.rename(columns={"session_id": "unique_views", "index": "date", "view_sampled_timestamp": "date"})
         print(unique_views_grouped_by_date)
-
+        # return views_grouped_by_date
         # get clicks
         view_ids = list(_views_df["id"])
-        clicks = db.execute("SELECT click_count, link_id, click_sampled_timestamp, view_id FROM ClicksResample, ViewsResample WHERE ViewsResample.id = ClicksResample.view_id AND view_id in :views_list AND click_sampled_timestamp BETWEEN :start AND :end", {"views_list": tuple(view_ids), "start": start, "end": end})
+        # clicks = db.execute("SELECT click_count, link_id, click_sampled_timestamp, view_id FROM ClicksResample, ViewsResample WHERE ViewsResample.id = ClicksResample.view_id AND view_id in :views_list AND click_sampled_timestamp BETWEEN :start AND :end", {"views_list": tuple(view_ids), "start": start, "end": end})
+        clicks = db.execute("SELECT click_count, link_id, click_sampled_timestamp, view_id FROM ClicksResample WHERE click_sampled_timestamp BETWEEN :start AND :end", {"start": start, "end": end})
         _clicks_df = pd.DataFrame(clicks.fetchall())
         if _clicks_df.empty:
-            return JSONResponse(content={"message": f"No data found for the specified date range"}, status_code=status.HTTP_404_NOT_FOUND)
+            # create clicks_response with  three cols date=views_df.date, total_clicks=0, unique_clicks=0
+            response_data = pd.concat([views_grouped_by_date, unique_views_grouped_by_date])
+            response_data["total_clicks"] = 0
+            response_data["unique_clicks"] = 0
+            return response_data
         _clicks_df["click_sampled_timestamp"] = pd.to_datetime(_clicks_df["click_sampled_timestamp"])
         _clicks_df = _clicks_df.set_index("click_sampled_timestamp")
         if freq == "daily":
@@ -167,8 +169,6 @@ def get_activity(username: str, start: dt, end: dt, freq: str, db : session = ge
             year = dt.now().strftime("%Y")
             clicks_grouped_by_date = _clicks_df.groupby(_clicks_df.index.month)["click_count"].sum()
             clicks_grouped_by_date.index = clicks_grouped_by_date.index.map(lambda x: dt.strptime(f"{year}-{x}-1", "%Y-%m-%d"))
-        else:
-            return JSONResponse(content={"message": f"Invalid frequency"}, status_code=status.HTTP_400_BAD_REQUEST)
         clicks_grouped_by_date = clicks_grouped_by_date.reset_index()
         # rename index to date
         clicks_grouped_by_date = clicks_grouped_by_date.rename(columns={"index": "date", "click_count": "total_clicks", "click_sampled_timestamp": "date"})
@@ -176,7 +176,6 @@ def get_activity(username: str, start: dt, end: dt, freq: str, db : session = ge
         # add new col "temp" to _clicks_df which is a list of tuples of link_id and view_id
         _clicks_df["unique_clicks"] = list(zip(_clicks_df["link_id"], _clicks_df["view_id"])) 
         print(_clicks_df)
-
         # get unique clicks
         if freq == "daily":
             unique_clicks_grouped_by_date = _clicks_df.groupby(_clicks_df.index.date)["unique_clicks"].nunique()
@@ -188,24 +187,15 @@ def get_activity(username: str, start: dt, end: dt, freq: str, db : session = ge
             year = dt.now().strftime("%Y")
             unique_clicks_grouped_by_date = _clicks_df.groupby(_clicks_df.index.month)["unique_clicks"].nunique()
             unique_clicks_grouped_by_date.index = unique_clicks_grouped_by_date.index.map(lambda x: dt.strptime(f"{year}-{x}-1", "%Y-%m-%d"))
-        else:
-            return JSONResponse(content={"message": f"Invalid frequency"}, status_code=status.HTTP_400_BAD_REQUEST)
         unique_clicks_grouped_by_date = unique_clicks_grouped_by_date.reset_index()
-        # # rename session_id to unique_clicks
         unique_clicks_grouped_by_date = unique_clicks_grouped_by_date.rename(columns={"index": "date", "click_sampled_timestamp": "date"})
         print(unique_clicks_grouped_by_date)
         response_data = pd.concat([views_grouped_by_date, unique_views_grouped_by_date])
-        # print(response_data)
-        # response_data = pd.concat([response_data, unique_views_grouped_by_date])
         response_data = pd.concat([response_data, clicks_grouped_by_date])
         response_data = pd.concat([response_data, unique_clicks_grouped_by_date])
-        # response_data = pd.concat([response_data, ctr])
-        # print(response_data)
         response_data = response_data.fillna(0)
-        # print(response_data)
-
         return response_data
 
 
     except Exception as e:
-        return {"message": str(e)}
+        return {"Error message": str(e)}
