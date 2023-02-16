@@ -80,7 +80,7 @@ def create_link(db:session, link:LinkSchema):
 		orm query set: returns created link
 	"""
 	short_url = create_little_link(db)
-	_link = Link(link_name=link.link_name, link_url=link.link_url, link_enable=link.link_enable, link_tiny=short_url, profile_id=get_profile_by_id(db, link.profile).id)
+	_link = Link(link_name=link.link_name, link_url=link.link_url, link_enable=link.link_enable, link_tiny=short_url, profile_id=get_profile_by_id(db, link.profile_id).id)
 	db.add(_link)
 	db.commit()
 	db.refresh(_link)

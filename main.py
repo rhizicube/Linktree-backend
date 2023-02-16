@@ -2,7 +2,7 @@ from fastapi import FastAPI, APIRouter
 import schemas.models as models
 import uvicorn
 from db_connect.config import postgre_engine
-from router import profile, link, user_profile, setting, view, click, profileDetails, analytics, click_resample
+from router import profile, link, user_profile, setting, profileDetails, analytics
 from db_connect.setup import connect_to_mongo, close_mongo_connection
 from celery_config.celery_utils import create_celery
 from fastapi.middleware.cors import CORSMiddleware

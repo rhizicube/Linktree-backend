@@ -179,10 +179,8 @@ def update_profile_image(db:session, id:int, file:UploadFile=File(...)):
 	Returns:
 		orm query set: returns updated profile
 	"""
-	print(type(file))
 	_profile = get_profile_by_id(db, id)
 	img_path = save_uploaded_image(file)
-	print('>>>>>>>>', _profile.profile_image_path)
 	if _profile.profile_image_path not in [None, ""]:
 		os.remove(_profile.profile_image_path)
 	_profile.profile_image_path = img_path
@@ -193,12 +191,12 @@ def update_profile_image(db:session, id:int, file:UploadFile=File(...)):
 
 
 def delete_profile_image(db:session, id:int=None, uname:str=None):
-	"""Function to delete profile image from DB
+	"""Function to delete profile image from DB and media folder
 
 	Args:
 		db (session): DB connection session for ORM functionalities
-		id (int, optional): profile id. Defaults to None.
-		uname (str, optional): User name. Defaults to None.
+		id (int, optional): Profile id, pk. Defaults to None.
+		uname (str, optional): Username. Defaults to None.
 
 	Returns:
 		orm query set: returns updated profile
@@ -214,3 +212,22 @@ def delete_profile_image(db:session, id:int=None, uname:str=None):
 	db.commit()
 	db.refresh(_profile)
 	return _profile
+
+
+def create_empty_profile(username:str, db:session, file:UploadFile=File(...)):
+	"""Function to create empty profile if image is uploaded without profile information
+
+	Args:
+		db (session): DB connection session for ORM functionalities
+
+	Returns:
+		orm query set: returns created profile
+	"""
+	temp_profile = "empty_profile" + username
+	img_path = save_uploaded_image(file)
+	_profile = Profile(profile_image_path=img_path, username=username, profile_name=temp_profile, profile_link=temp_profile, profile_bio="")
+	db.add(_profile)
+	db.commit()
+	db.refresh(_profile)
+	return _profile
+	
