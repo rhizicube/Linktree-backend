@@ -1,4 +1,5 @@
 from typing import List, Optional, Generic, TypeVar
+from datetime import datetime
 from pydantic import BaseModel, Field
 from pydantic.generics import GenericModel
 
@@ -10,7 +11,8 @@ class ViewsResampleSchema(BaseModel):
     device_name: str
     view_count: int
     profiles:int
-    view_sampled_timestamp: str
+    # view_sampled_timestamp: datetime
+    view_sampled_timestamp: datetime
     class Config:
         orm_mode=True
 
