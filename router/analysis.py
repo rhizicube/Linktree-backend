@@ -10,8 +10,9 @@ from datetime import datetime as dt
 from sqlalchemy import inspect
 from crud import profiles
 import json
+import numpy as np
 import pandas as pd
-from utilities.analysis import get_views_and_clicks, get_unique_views_and_clicks
+from utilities.analysis import get_views_and_clicks, get_unique_views_and_clicks, get_activity
 from fastapi.encoders import jsonable_encoder
 
 analysis_router = APIRouter()
@@ -291,30 +292,7 @@ analysis_router = APIRouter()
 # clicks group by link_id
 # add doc string to the function
 # add comments to the code
-@analysis_router.get("/analytics/getmetrics/")
-async def get(username:str, db:session=Depends(get_db)):
-    # get the total views and clicks for the profile with username
-    try:
-        usernames = profiles.get_all_usernames(db)
-        if username not in usernames:
-            return JSONResponse(content={"message": f"User with username {username} not found"}, status_code=status.HTTP_404_NOT_FOUND)
-        # total views for the profile
-        views = db.execute("SELECT SUM(view_count) FROM ViewsResample, Profile WHERE Profile.id = ViewsResample.profile_id AND Profile.username = :username", {"username": username})
-        total_views = views.fetchone()[0]
-        if total_views == None:
-            total_views = 0
-        # total clicks for the profile
-        clicks = db.execute("SELECT SUM(click_count) FROM ClicksResample, ViewsResample, Profile WHERE Profile.id = ViewsResample.profile_id AND Profile.username = :username AND ViewsResample.id = ClicksResample.view_id", {"username": username})
-        total_clicks = clicks.fetchone()[0]
-        if total_clicks == None:
-            total_clicks = 0
-        # ctr = total_clicks/total_views
-        ctr=0
-        if total_views != 0 and total_clicks != 0:
-            ctr = round(total_clicks/total_views, 3)
-        return JSONResponse(content={"data": {"views": total_views, "clicks": total_clicks, "ctr": ctr}}, status_code=status.HTTP_200_OK)
-    except Exception as e:
-        return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)
+
 
 
 
@@ -444,57 +422,112 @@ async def get(username:str, db:session=Depends(get_db)):
 
 
 # wrap all the functions in a single router
+# @analysis_router.get("/analytics/getactivitycount")
+# async def get_activity_count(username: str, start: dt, end: dt, db:session=Depends(get_db)):
+#     try:
+#         usernames = profiles.get_all_usernames(db)
+#         if username not in usernames:
+#             return JSONResponse(content={"message": f"User with username {username} not found"}, status_code=status.HTTP_404_NOT_FOUND)
+#         if not start or not end:
+#             return JSONResponse(content={"message": "start and end dates are required"}, status_code=status.HTTP_400_BAD_REQUEST)
+#         # get total views for a date
+#         views_and_clicks = get_views_and_clicks(username, start, end, db)
+#         print(views_and_clicks)
+#         response_data = {"data": []}
+#         for date, view in views_and_clicks["views"].items():
+#             view_count=0
+#             for session in view:
+#                 view_count+=session["view_count"]
+#             response_data["data"].append({"date": date, "views": view_count})
+        
+#         for date, clicks in views_and_clicks["clicks"].items():
+#             click_count=0
+#             for click in clicks:
+#                 click_count+=click["click_count"]
+#             temp=False
+#             for i in range(len(response_data["data"])):
+#                 if date == response_data["data"][i]["date"]:
+#                     response_data["data"][i]["clicks"] = click_count
+#                     temp=True
+#                     break
+#         for i in range(len(response_data["data"])):
+#             if response_data["data"][i].get("views")==None and response_data["data"][i].get("clicks")==None:
+#                 response_data["data"][i]["ctr"]=0
+#                 response_data["data"][i]["views"]=0
+#                 response_data["data"][i]["clicks"]=0
+#             elif response_data["data"][i].get("views")==None:
+#                 response_data["data"][i]["views"]=0
+#                 response_data["data"][i]["ctr"]=0
+#             elif response_data["data"][i].get("clicks")==None:
+#                 response_data["data"][i]["clicks"]=0
+#                 response_data["data"][i]["ctr"]=0
+#             elif response_data["data"][i].get("views")!=None and response_data["data"][i].get("clicks")!=None:
+#                 response_data["data"][i]["ctr"] = round(response_data["data"][i]["clicks"]/response_data["data"][i]["views"], 3)
+#         unique_views_and_clicks = get_unique_views_and_clicks(username, start, end, db)
+#         for i in range(len(response_data["data"])):
+#             response_data["data"][i]["unique_views"] = unique_views_and_clicks["views"]["unique_views_by_date"][response_data["data"][i]["date"]]
+#             # response_data["data"][i]["unique_clicks"] = unique_views_and_clicks["clicks"]["unique_clicks_by_date"][response_data["data"][i]["date"]]
+#         for i in range(len(response_data["data"])):
+#             if response_data["data"][i]["date"] in unique_views_and_clicks["clicks"]["unique_clicks_by_date"]:
+#                 response_data["data"][i]["unique_clicks"] = unique_views_and_clicks["clicks"]["unique_clicks_by_date"][response_data["data"][i]["date"]]
+#             else:
+#                 response_data["data"][i]["unique_clicks"] = 0
+#         return JSONResponse(content=response_data, status_code=status.HTTP_200_OK)
+#     except Exception as e:
+#         return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)
+        
+
 @analysis_router.get("/analytics/getactivitycount")
-async def get_activity_count(username: str, start: dt, end: dt, db:session=Depends(get_db)):
+async def get_activity_test(username: str, start: dt, end: dt, freq: str, db:session=Depends(get_db)):
     try:
         usernames = profiles.get_all_usernames(db)
         if username not in usernames:
             return JSONResponse(content={"message": f"User with username {username} not found"}, status_code=status.HTTP_404_NOT_FOUND)
         if not start or not end:
             return JSONResponse(content={"message": "start and end dates are required"}, status_code=status.HTTP_400_BAD_REQUEST)
-        # get total views for a date
-        views_and_clicks = get_views_and_clicks(username, start, end, db)
-        print(views_and_clicks)
-        response_data = {"data": []}
-        for date, view in views_and_clicks["views"].items():
-            view_count=0
-            for session in view:
-                view_count+=session["view_count"]
-            response_data["data"].append({"date": date, "views": view_count})
+        if start>end:
+            return JSONResponse(content={"message": "start date should be less than end date"}, status_code=status.HTTP_400_BAD_REQUEST)
+        if freq not in ["daily", "weekly", "monthly"]:
+            return JSONResponse(content={"message": "freq should be daily, weekly or monthly"}, status_code=status.HTTP_400_BAD_REQUEST)
         
-        for date, clicks in views_and_clicks["clicks"].items():
-            click_count=0
-            for click in clicks:
-                click_count+=click["click_count"]
-            temp=False
-            for i in range(len(response_data["data"])):
-                if date == response_data["data"][i]["date"]:
-                    response_data["data"][i]["clicks"] = click_count
-                    temp=True
-                    break
-        for i in range(len(response_data["data"])):
-            if response_data["data"][i].get("views")==None and response_data["data"][i].get("clicks")==None:
-                response_data["data"][i]["ctr"]=0
-                response_data["data"][i]["views"]=0
-                response_data["data"][i]["clicks"]=0
-            elif response_data["data"][i].get("views")==None:
-                response_data["data"][i]["views"]=0
-                response_data["data"][i]["ctr"]=0
-            elif response_data["data"][i].get("clicks")==None:
-                response_data["data"][i]["clicks"]=0
-                response_data["data"][i]["ctr"]=0
-            elif response_data["data"][i].get("views")!=None and response_data["data"][i].get("clicks")!=None:
-                response_data["data"][i]["ctr"] = round(response_data["data"][i]["clicks"]/response_data["data"][i]["views"], 3)
-        unique_views_and_clicks = get_unique_views_and_clicks(username, start, end, db)
-        for i in range(len(response_data["data"])):
-            response_data["data"][i]["unique_views"] = unique_views_and_clicks["views"]["unique_views_by_date"][response_data["data"][i]["date"]]
-            # response_data["data"][i]["unique_clicks"] = unique_views_and_clicks["clicks"]["unique_clicks_by_date"][response_data["data"][i]["date"]]
-        for i in range(len(response_data["data"])):
-            if response_data["data"][i]["date"] in unique_views_and_clicks["clicks"]["unique_clicks_by_date"]:
-                response_data["data"][i]["unique_clicks"] = unique_views_and_clicks["clicks"]["unique_clicks_by_date"][response_data["data"][i]["date"]]
-            else:
-                response_data["data"][i]["unique_clicks"] = 0
+        response_data = get_activity(username, start, end, freq, db)
+        # response_data = response_data.to_dict(orient="records")
+        # response_data = json.dumps(response_data, default=str)
+        # response_data = {"data": response_data}
+        # response_data = json.loads(response_data["data"])
+        response_data = pd.DataFrame(response_data)
+        response_data = response_data.groupby("date").sum().reset_index()
+        # iterrows to get ctr using loop
+        response_data["ctr"] = [0 if row["total_views"]==0 else round(row["total_clicks"]/row["total_views"]*100, 3) for index, row in response_data.iterrows()]
+        response_data = response_data.to_dict(orient="records")
+        response_data = json.dumps(response_data, default=str)
+        response_data = {"data": response_data}
+        response_data = json.loads(response_data["data"])
         return JSONResponse(content=response_data, status_code=status.HTTP_200_OK)
     except Exception as e:
         return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)
-       
+
+@analysis_router.get("/analytics/getmetrics/")
+async def get(username:str, db:session=Depends(get_db)):
+    # get the total views and clicks for the profile with username
+    try:
+        usernames = profiles.get_all_usernames(db)
+        if username not in usernames:
+            return JSONResponse(content={"message": f"User with username {username} not found"}, status_code=status.HTTP_404_NOT_FOUND)
+        # total views for the profile
+        views = db.execute("SELECT SUM(view_count) FROM ViewsResample, Profile WHERE Profile.id = ViewsResample.profile_id AND Profile.username = :username", {"username": username})
+        total_views = views.fetchone()[0]
+        if total_views == None:
+            total_views = 0
+        # total clicks for the profile
+        clicks = db.execute("SELECT SUM(click_count) FROM ClicksResample, ViewsResample, Profile WHERE Profile.id = ViewsResample.profile_id AND Profile.username = :username AND ViewsResample.id = ClicksResample.view_id", {"username": username})
+        total_clicks = clicks.fetchone()[0]
+        if total_clicks == None:
+            total_clicks = 0
+        # ctr = total_clicks/total_views
+        ctr=0
+        if total_views != 0 and total_clicks != 0:
+            ctr = round(total_clicks/total_views, 3)
+        return JSONResponse(content={"data": {"views": total_views, "clicks": total_clicks, "ctr": ctr}}, status_code=status.HTTP_200_OK)
+    except Exception as e:
+        return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)
