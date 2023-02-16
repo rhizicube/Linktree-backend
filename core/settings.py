@@ -64,8 +64,8 @@ class Settings(BaseSettings):
 	MEDIA_ROOT: str = os.path.join(BASE_DIR, 'media/')
 
 	# Path to file containing location details based on IP
-	# IPv4_LOCATION_FILE_PATH: str = os.path.join(BASE_DIR, 'ip2_locations', "IP2LOCATION-LITE-DB5.BIN")
-	# IPv6_LOCATION_FILE_PATH: str = os.path.join(BASE_DIR, 'ip2_locations', "IP2LOCATION-LITE-DB9.IPV6.BIN")
+	IPv4_LOCATION_FILE_PATH: str = os.path.join(BASE_DIR, 'ip2_locations', "IP2LOCATION-LITE-DB5.BIN")
+	IPv6_LOCATION_FILE_PATH: str = os.path.join(BASE_DIR, 'ip2_locations', "IP2LOCATION-LITE-DB9.IPV6.BIN")
 
 	# Celery setup
 	AMQP_USER: str = "rhizicube-admin"
