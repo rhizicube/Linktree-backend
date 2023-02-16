@@ -12,15 +12,15 @@ models.PostgreBase.metadata.create_all(bind=postgre_engine)
 main_router = APIRouter()
 
 def include_routers():
-	main_router.include_router(profile.profile_router, prefix="/api/profiles", tags=["profile"])
-	main_router.include_router(link.link_router, prefix="/api/links", tags=["link"])
-	main_router.include_router(setting.setting_router, prefix="/api/settings", tags=["setting"])
-	main_router.include_router(user_profile.router, prefix="/api", tags=["Visitor"])
-	main_router.include_router(profileDetails.profile_detail_router, prefix='/api/profile', tags=["User"])
-	# main_router.include_router(view.view_router, prefix='/api/views', tags=["View"])
-	# main_router.include_router(click.click_router, prefix='/api/clicks', tags=["Click"])
-	main_router.include_router(analytics.analytics_router, prefix='/analytics', tags=["Analytics"])
-	# main_router.include_router(click_resample.click_router, prefix='/api/clicksresample', tags=["ClickResample"])
+	main_router.include_router(profile.profile_router, prefix="/v1.0/api/profiles", tags=["profile"])
+	main_router.include_router(link.link_router, prefix="/v1.0/api/links", tags=["link"])
+	main_router.include_router(setting.setting_router, prefix="/v1.0/api/settings", tags=["setting"])
+	main_router.include_router(user_profile.router, prefix="/v1.0/api", tags=["Visitor"])
+	main_router.include_router(profileDetails.profile_detail_router, prefix='/v1.0/api/profile', tags=["User"])
+	# main_router.include_router(view.view_router, prefix='/v1.0/api/views', tags=["View"])
+	# main_router.include_router(click.click_router, prefix='/v1.0/api/clicks', tags=["Click"])
+	main_router.include_router(analytics.analytics_router, prefix='/v1.0/analytics', tags=["Analytics"])
+	# main_router.include_router(click_resample.click_router, prefix='/v1.0/api/clicksresample', tags=["ClickResample"])
 
 
 def create_app() -> FastAPI:
