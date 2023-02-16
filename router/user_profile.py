@@ -96,6 +96,9 @@ async def get_user_profile(url:str, request:Request, db:session=Depends(get_db))
 			resp_data = jsonable_encoder(resp_data)
 			if resp_data["profile"]["profile_image_path"] and os.path.exists(resp_data["profile"]["profile_image_path"]):
 				resp_data["profile"]["profile_image_path"] = "media" + resp_data["profile"]["profile_image_path"].split("media")[-1]
+			for link in resp_data["link"]:
+				if link["link_thumbnail"] and os.path.exists(link["link_thumbnail"]):
+					link["link_thumbnail"] = "media" + link["link_thumbnail"].split("media")[-1]
 			response = JSONResponse(content={"data": resp_data}, status_code=status.HTTP_200_OK)
 			if response_cookie:
 				response.set_cookie(key="linktree_visitor", value=response_cookie, expires=100)
