@@ -1,7 +1,7 @@
 from typing import Optional, Generic, TypeVar, Text
 from pydantic import BaseModel, Field
 from pydantic.generics import GenericModel
-
+from datetime import datetime
 """Serialization for Link data coming from requests as well as data going to responses"""
 
 T = TypeVar('T') # Can be anything
@@ -10,7 +10,7 @@ class ClicksResampleSchema(BaseModel):
     click_count: int
     view_id:int
     link_id:int
-    click_sampled_timestamp: str
+    click_sampled_timestamp: datetime
     class Config:
         orm_mode=True
 
