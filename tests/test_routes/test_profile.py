@@ -9,9 +9,9 @@ def create_profile(client):
 	assert response.json()["message"] == "Profile 1 created"
 
 def create_profile_invalid(client):
-    data = {"parameter": {"profile_link": "test"}}
-    response = client.post("/profile/", data=json.dumps(data))
-    assert response.status_code == 422
+	data = {"parameter": {"profile_link": "test"}}
+	response = client.post("/profile/", data=json.dumps(data))
+	assert response.status_code == 422
 
 
 def get_profile(client):
@@ -23,8 +23,8 @@ def get_profile_by_id(client):
 	assert response.status_code == 200
 
 def get_profile_by_username(client):
-    response = client.get("/profile/", params={"uname": "test01"})
-    assert response.status_code == 200
+	response = client.get("/profile/", params={"uname": "test01"})
+	assert response.status_code == 200
 
 def get_profile_by_username_invalid(client):
 	response = client.get("/api/profiles/profile/", params={"uname": "temndcbstuser2"})
@@ -32,9 +32,9 @@ def get_profile_by_username_invalid(client):
 	# assert response.json()["message"] == "Profile testuser2 not found"
 
 def get_profile_by_id_invalid(client):
-    response = client.get("/profile/", params={"id": 2})
-    assert response.status_code == 404
-    assert response.json()["message"] == "Profile 2 not found"
+	response = client.get("/profile/", params={"id": 2})
+	assert response.status_code == 404
+	assert response.json()["message"] == "Profile 2 not found"
 
 def update_profile(client):
 	data = {"parameter": {"profile_bio": "Test user's bio changed kjd", "profile_name": "testuser2changed6468", "profile_link": "linkupdated"}}

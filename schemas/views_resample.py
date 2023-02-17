@@ -1,4 +1,5 @@
 from typing import List, Optional, Generic, TypeVar
+from datetime import datetime
 from pydantic import BaseModel, Field
 from pydantic.generics import GenericModel
 from datetime import datetime as dt

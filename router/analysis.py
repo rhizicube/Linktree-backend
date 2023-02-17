@@ -5,7 +5,6 @@ from db_connect.setup import get_db
 from datetime import datetime as dt
 from crud import profiles
 import json
-import pandas as pd
 from utilities.analysis import get_activity
 
 analysis_router = APIRouter()
@@ -484,15 +483,16 @@ async def get_activity_test(username: str, start: dt, end: dt, freq: str, db:ses
 			return JSONResponse(content={"message": "freq should be daily, weekly or monthly"}, status_code=status.HTTP_400_BAD_REQUEST)
 		
 		response_data = get_activity(username, start, end, freq, db)
-		# response_data = response_data.to_dict(orient="records")
-		# response_data = json.dumps(response_data, default=str)
-		# response_data = {"data": response_data}
-		# response_data = json.loads(response_data["data"])
-		response_data = pd.DataFrame(response_data)
+		# if response_data.total_clicks is 0
+		print(response_data)
+		if response_data["total_views"].sum()==0:
+			print("No data found")
+			return JSONResponse(content={"message": "No data found"}, status_code=status.HTTP_404_NOT_FOUND)
 		response_data = response_data.groupby("date").sum().reset_index()
-		# iterrows to get ctr using loop
+		# iterrows to get ctr
 		response_data["ctr"] = [0 if row["total_views"]==0 else round(row["total_clicks"]/row["total_views"]*100, 3) for index, row in response_data.iterrows()]
 		response_data = response_data.to_dict(orient="records")
+		# return JSONResponse(content=response_data, status_code=status.HTTP_200_OK)
 		response_data = json.dumps(response_data, default=str)
 		response_data = {"data": response_data}
 		response_data = json.loads(response_data["data"])
@@ -520,7 +520,7 @@ async def get(username:str, db:session=Depends(get_db)):
 		# ctr = total_clicks/total_views
 		ctr=0
 		if total_views != 0 and total_clicks != 0:
-			ctr = round(total_clicks/total_views, 3)
+			ctr = round(total_clicks/total_views*100, 3)
 		return JSONResponse(content={"data": {"views": total_views, "clicks": total_clicks, "ctr": ctr}}, status_code=status.HTTP_200_OK)
 	except Exception as e:
 		return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)
