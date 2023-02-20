@@ -8,6 +8,9 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import JSON
 
 
+
+""" All PostgreSQL models """
+
 class Profile(PostgreBase):
 	__tablename__ = "profile"
 	
@@ -16,14 +19,15 @@ class Profile(PostgreBase):
 	profile_link=Column(String, nullable=False, unique=True)
 	profile_bio=Column(Text, nullable=True)
 	profile_image_path=Column(String, nullable=True)
+	profile_description=Column(Text, nullable=True)
 	profile_created=Column(DateTime, server_default=func.now())
 	username = Column(String, nullable=False, unique=True)
 	subscription_id = Column(Integer, ForeignKey("subscription.id"), nullable=True, server_onupdate="SET NULL", server_ondelete="SET NULL")
 
 	subscription = relationship("Subscription", back_populates="profile")
-	links = relationship("Link", back_populates="profile")
-	settings = relationship("Setting", back_populates="profile")
-	views = relationship("ViewsResample", back_populates="profile")
+	links = relationship("Link", cascade="all,delete", backref="parent")
+	settings = relationship("Setting", cascade="all,delete", backref="parent")
+	views = relationship("ViewsResample", cascade="all,delete", backref="parent")
 
 
 class Link(PostgreBase):
@@ -75,6 +79,7 @@ class ViewsResample(PostgreBase):
 	device_type=Column(String, nullable=False)
 	view_count=Column(Integer, nullable=False)
 	view_location=Column(JSON, nullable=True)
+	view_sampled_timestamp=Column(DateTime, nullable=False)
 	view_created=Column(DateTime, server_default=func.now())
 	profile_id=Column(Integer, ForeignKey("profile.id"), nullable=False, server_onupdate="CASCADE", server_ondelete="CASCADE")
  
@@ -88,6 +93,7 @@ class ClicksResample(PostgreBase):
 	id=Column(Integer, primary_key=True, autoincrement=True)
 	click_count=Column(Integer, nullable=False)
 	click_created=Column(DateTime, server_default=func.now())
+	click_sampled_timestamp=Column(DateTime, nullable=False)
 	view_id=Column(Integer, ForeignKey("viewsresample.id"), nullable=False, server_onupdate="CASCADE", server_ondelete="CASCADE")
 	link_id=Column(Integer, ForeignKey("link.id"), nullable=False, server_onupdate="CASCADE", server_ondelete="CASCADE")
  
@@ -113,6 +119,7 @@ class PyObjectId(ObjectId):
 	def __modify_schema__(cls, field_schema):
 		field_schema.update(type="string")
 
+
 class Views(BaseModel):
 	id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
 	profile_link: str = Field(...)
@@ -121,11 +128,11 @@ class Views(BaseModel):
 	location: dict = Field(...)
 	view_created: dt = dt.utcnow()
 	
-
 	class Config:
 		allow_population_by_field_name = True
 		arbitrary_types_allowed = True
 		json_encoders = {ObjectId: str}
+
 
 class UpdateViews(BaseModel):
 	profile_link: Optional[str]
@@ -145,7 +152,6 @@ class Clicks(BaseModel):
 	session_id: str = Field(...)
 	click_created: dt = dt.utcnow()
 	
-
 	class Config:
 		allow_population_by_field_name = True
 		arbitrary_types_allowed = True

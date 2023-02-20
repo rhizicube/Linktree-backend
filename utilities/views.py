@@ -3,7 +3,7 @@ from user_agents import parse
 from core.constants import locationDatabaseIPv4, locationDatabaseIPv6
 from utilities.generic import valid_ip_address
 
-from db_connect.setup import get_mongo_database
+from db_connect.config import mongoDB
 
 
 
@@ -14,7 +14,7 @@ async def create_cookie_id() -> str:
 	Returns:
 		str: cookie id
 	"""
-	mongoDBConnection = get_mongo_database()
+	mongoDBConnection = mongoDB.database
 	short_url_length = 25
 	distinct_sessions = await mongoDBConnection["views"].distinct("session_id")
 	print(distinct_sessions)
@@ -24,6 +24,22 @@ async def create_cookie_id() -> str:
 			break
 	cookie_id = str(res)
 	return cookie_id
+
+
+def get_ip_location(client_host):
+    # If visitor's location to be found from the database corresponding to the type of IP address (IPv4/IPv6)
+	ip_address_type = valid_ip_address(client_host)
+	if ip_address_type == "IPv4":
+		locobj = locationDatabaseIPv4.get_all(client_host)
+	elif ip_address_type == "IPv6":
+		locobj = locationDatabaseIPv6.get_all(client_host)
+	else:
+		print("Invalid IP address", client_host)
+		return {}
+	location = {"ip": locobj.ip, "country": locobj.country_long, "region": locobj.region, "city": locobj.city, "latitude": locobj.latitude, "longitude": locobj.longitude}
+
+	return location
+
 
 def get_client_details(request) -> tuple:
 	"""Function to get visitor's device type and location details based on their IP address
@@ -55,18 +71,6 @@ def get_client_details(request) -> tuple:
 	if client_host == "127.0.0.1":
 		# Local testing
 		client_host = urllib.request.urlopen('https://ident.me').read().decode('utf8')
-	
-	# If visitor's location to be found from the database corresponding to the type of IP address (IPv4/IPv6)
-	ip_address_type = valid_ip_address(client_host)
-	if ip_address_type == "IPv4":
-		locobj = locationDatabaseIPv4.get_all(client_host)
-	elif ip_address_type == "IPv6":
-		locobj = locationDatabaseIPv6.get_all(client_host)
-	else:
-		print("Invalid IP address", client_host)
-		return device_type, {}
+	location = get_ip_location(client_host)
 
-	
-	location = {"ip": locobj.ip, "country": locobj.country_long, "region": locobj.region, "city": locobj.city, "latitude": locobj.latitude, "longitude": locobj.longitude}
-	
 	return device_type, location

@@ -10,7 +10,7 @@ from db_connect.setup import get_db
 link_router = APIRouter()
 
 
-@link_router.post("/link/")
+# @link_router.post("/link/")
 async def create(request:RequestLink, db:session=Depends(get_db)):
 	"""API to create link
 
@@ -29,7 +29,7 @@ async def create(request:RequestLink, db:session=Depends(get_db)):
 			return JSONResponse(content={"message": f"Link URL already exists"}, status_code=status.HTTP_400_BAD_REQUEST)
 		return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)
 
-@link_router.get("/link/")
+# @link_router.get("/link/")
 async def get(id:int=None, profile_id:int=None, db:session=Depends(get_db)):
 	"""API to get link
 
@@ -61,7 +61,7 @@ async def get(id:int=None, profile_id:int=None, db:session=Depends(get_db)):
 		return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)
 
 
-@link_router.put("/link/")
+# @link_router.put("/link/")
 async def update(request:UpdateLink, id:int=None, db:session=Depends(get_db)):
 	"""API to update link
 
@@ -93,8 +93,12 @@ async def delete(id:int=None, db:session=Depends(get_db)):
 	"""
 	try:
 		if id:
-			_link = links.delete_link_by_id(db, id)
-			return JSONResponse(content={"message": f"Link {id} deleted"}, status_code=status.HTTP_200_OK)
+			link_id = links.get_link_by_id(db, id)
+			if link_id:
+				_link = links.delete_link_by_id(db, id)
+				return JSONResponse(content={"message": f"Link {id} deleted"}, status_code=status.HTTP_200_OK)
+			else:
+				return JSONResponse(content={"message": f"Link {id} not found"}, status_code=status.HTTP_404_NOT_FOUND)
 		else:
 			deleted_rows = links.delete_all_links(db)
 			return JSONResponse(content={"message": f"{deleted_rows} links deleted"}, status_code=status.HTTP_200_OK)

@@ -18,20 +18,27 @@ profile_detail_router = APIRouter()
 async def get(username:str, db:session=Depends(get_db)):
 	# proceed if username exists
 	try:
-		if username:
+		usernames = profiles.get_all_usernames(db)
+		if username in usernames:
 			try:
 				_profile = profiles.get_profile_by_user(db, username)
+				if not _profile:
+					return JSONResponse(status_code=status.HTTP_404_NOT_FOUND, content={"message": f"Profile for {username} not found"})
 			except:
 				_profile = None
 			if _profile is not None:
 				_links = links.get_link_by_profile(db, _profile.id)
 				_settings = settings.get_setting_by_profile(db, _profile.id)
 			else:
-				_links = None
-				_settings = None
+				return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content={"message":"Profile doesn't exist"})
 			# Can be converted to json format together
 			resp_data = {"profile":_profile, "link":_links, "settings":_settings}
 			resp_data = jsonable_encoder(resp_data)
+			# if profile_link has "empty_profile" in it, remove it
+			if "empty" in resp_data["profile"]["profile_link"]:
+				resp_data["profile"]["profile_link"] = ""
+			if "empty" in resp_data["profile"]["profile_name"][:13]:
+				resp_data["profile"]["profile_name"] = ""
 			return JSONResponse(status_code=status.HTTP_200_OK, content={"data": resp_data})
 		else:
 			return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content={"message":"Username is required"})
@@ -48,6 +55,8 @@ async def create(username:str, request: Dict[Any, Any], db:session=Depends(get_d
 			all_usernames = profiles.get_all_usernames(db)
 			if username in all_usernames or request.get("profile", None) is None:
 				_profile = profiles.get_profile_by_user(db, username)
+				if not _profile:
+					return JSONResponse(status_code=status.HTTP_404_NOT_FOUND, content={"message": f"Profile for {username} not found"})
 			else:
 				request["profile"]["username"] = username
 				profile = ProfileSchema(**request["profile"])
@@ -70,7 +79,7 @@ async def create(username:str, request: Dict[Any, Any], db:session=Depends(get_d
 					link = LinkSchema(**link)
 					_link = links.create_link(db, link)
 					print(link)
-					response_data["links"] = _link
+					response_data["links"] = jsonable_encoder(_link)
 			if request.get("setting", None) is not None:
 				request["setting"]["profile"] = _profile.id
 				setting = SettingSchema(**request["setting"])
@@ -89,8 +98,10 @@ async def update(username:str, request: Dict[Any, Any], link_id:int=None, db:ses
 	try:
 		if username:
 			profile = profiles.get_profile_by_user(db, username)
+			if not profile:
+				return JSONResponse(status_code=status.HTTP_404_NOT_FOUND, content={"message": f"Profile for {username} not found"})
 			if request.get("profile", None) is not None:
-				_profile = profiles.update_profile(db, profile.id, request["profile"].get("profile_bio", None), request["profile"].get("profile_name", None), request["profile"].get("profile_url", None))
+				_profile = profiles.update_profile(db, profile.id, request["profile"].get("profile_bio", None), request["profile"].get("profile_name", None), request["profile"].get("profile_link", None))
 			if request.get("setting", None) is not None:
 				setting = settings.get_setting_by_profile(db, profile.id)
 				_setting = settings.update_setting(db, setting.id, request["setting"].get("profile_social", None))

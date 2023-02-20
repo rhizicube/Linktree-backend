@@ -49,6 +49,9 @@ async def get(id:int=None, username:str=None, db:session=Depends(get_db)):
 			else:
 				return JSONResponse(content={"message": f"Profile {id} not found"}, status_code=status.HTTP_404_NOT_FOUND)
 		elif username:
+			usernames = profiles.get_all_usernames(db)
+			if username not in usernames:
+				return JSONResponse(content={"message": f"Profile {username} not found"}, status_code=status.HTTP_404_NOT_FOUND)
 			_profile = profiles.get_profile_by_user(db, username)
 			if _profile:
 				return ResponseProfile(code=status.HTTP_200_OK, status="OK", result=_profile, message="Success").dict(exclude_none=True)
@@ -75,6 +78,8 @@ async def update(request:UpdateProfile, id:int=None, db:session=Depends(get_db))
 	"""
 	try:
 		_profile = profiles.update_profile(db, id, request.parameter.profile_bio, request.parameter.profile_name, request.parameter.profile_link)
+		if not _profile:
+			return JSONResponse(content={"message": f"Profile {id} not found"}, status_code=status.HTTP_404_NOT_FOUND)
 		return JSONResponse(content={"message": f"Profile {id} updated"}, status_code=status.HTTP_200_OK)
 	except Exception as e:
 		return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)
@@ -93,8 +98,12 @@ async def delete(id:int=None, db:session=Depends(get_db)):
 	"""
 	try:
 		if id:
-			_profile = profiles.delete_profile_by_id(db, id)
-			return JSONResponse(content={"message": f"Profile {id} deleted"}, status_code=status.HTTP_200_OK)
+			profile_id = profiles.get_profile_by_id(db, id)
+			if profile_id is not None:
+				_profile = profiles.delete_profile_by_id(db, id)
+				return JSONResponse(content={"message": f"Profile {id} deleted"}, status_code=status.HTTP_200_OK)
+			else:
+				return JSONResponse(content={"message": f"Profile {id} not found"}, status_code=status.HTTP_404_NOT_FOUND)
 		else:
 			deleted_rows = profiles.delete_all_profiles(db)
 			return JSONResponse(content={"message": f"{deleted_rows} profiles deleted"}, status_code=status.HTTP_200_OK)
@@ -102,7 +111,7 @@ async def delete(id:int=None, db:session=Depends(get_db)):
 		return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)
 
 @profile_router.put("/profile/image/")
-async def update_image(file:UploadFile=File(...), id:int=None, db:session=Depends(get_db)):
+async def update_image(username:str, file:UploadFile=File(...), id:int=None, db:session=Depends(get_db)): # mandatory username
 	"""API to update profile image
 
 	Args:
@@ -114,7 +123,44 @@ async def update_image(file:UploadFile=File(...), id:int=None, db:session=Depend
 		JSONResponse: Profile updated with 200 status if profile is updated, else exception text with 400 status
 	"""
 	try:
-		_profile = profiles.update_profile_image(db, id, file)
-		return JSONResponse(content={"message": f"Profile {id} updated"}, status_code=status.HTTP_200_OK)
+		_profile = profiles.get_profile_by_user(db, username)
+		if _profile is not None:
+			_profile = profiles.update_profile_image(db, _profile.id, file)
+			return JSONResponse(content={"message": f"Profile {_profile.id} updated"}, status_code=status.HTTP_200_OK)
+		else:
+			_profile = profiles.create_empty_profile(username, db, file)
+			return JSONResponse(content={"message": f"Profile created"}, status_code=status.HTTP_201_CREATED)
 	except Exception as e:
 		return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)
+
+
+	# if id is None:
+	# 	try:
+	# 		_profile = profiles.create_empty_profile(db, file)
+	# 		return JSONResponse(content={"message": f"Profile created"}, status_code=status.HTTP_201_CREATED)
+	# 	except Exception as e:
+	# 		return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)
+	# else:
+	# 	try:
+	# 		_profile = profiles.update_profile_image(db, id, file)
+	# 		return JSONResponse(content={"message": f"Profile {id} updated"}, status_code=status.HTTP_200_OK)
+	# 	except Exception as e:
+	# 		return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)
+
+# create empty profile if image is uploaded without profile
+# @profile_router.post("/profile/image/")
+# async def create_image(file:UploadFile=File(...), db:session=Depends(get_db)):
+	"""API to create profile image
+
+	Args:
+		file (UploadFile, optional): Uploaded image. Defaults to File(...).
+		db (session, optional): DB connection session for db functionalities. Defaults to Depends(get_db).
+
+	Returns:
+		JSONResponse: Profile created with 200 status if profile is created, else exception text with 400 status
+	"""
+	# try:
+	# 	_profile = profiles.create_empty_profile(db, file)
+	# 	return JSONResponse(content={"message": f"Profile created"}, status_code=status.HTTP_201_CREATED)
+	# except Exception as e:
+	# 	return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)
