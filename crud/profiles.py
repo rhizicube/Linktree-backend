@@ -179,10 +179,8 @@ def update_profile_image(db:session, id:int, file:UploadFile=File(...)):
 	Returns:
 		orm query set: returns updated profile
 	"""
-	print(type(file))
 	_profile = get_profile_by_id(db, id)
 	img_path = save_uploaded_image(file)
-	print('>>>>>>>>', _profile.profile_image_path)
 	if _profile.profile_image_path not in [None, ""]:
 		os.remove(_profile.profile_image_path)
 	_profile.profile_image_path = img_path
@@ -191,21 +189,33 @@ def update_profile_image(db:session, id:int, file:UploadFile=File(...)):
 	db.refresh(_profile)
 	return _profile
 
-def create_temp_profile_link(username:str):
-	"""Function to create temporary profile link
+
+def delete_profile_image(db:session, id:int=None, uname:str=None):
+	"""Function to delete profile image from DB and media folder
 
 	Args:
-		username (str): username
+		db (session): DB connection session for ORM functionalities
+		id (int, optional): Profile id, pk. Defaults to None.
+		uname (str, optional): Username. Defaults to None.
 
 	Returns:
-		str: returns profile link
+		orm query set: returns updated profile
 	"""
-	profile_link = "empty_profile" + username
-	return profile_link
+	if id:
+		_profile = get_profile_by_id(db, id)
+	else:
+		_profile = get_profile_by_user(db, uname)
+	if _profile.profile_image_path not in [None, ""]:
+		os.remove(_profile.profile_image_path)
+	_profile.profile_image_path = None
 
-# create empty profile if image is uploaded without profile information
+	db.commit()
+	db.refresh(_profile)
+	return _profile
+
+
 def create_empty_profile(username:str, db:session, file:UploadFile=File(...)):
-	"""Function to create empty profile
+	"""Function to create empty profile if image is uploaded without profile information
 
 	Args:
 		db (session): DB connection session for ORM functionalities
@@ -213,11 +223,11 @@ def create_empty_profile(username:str, db:session, file:UploadFile=File(...)):
 	Returns:
 		orm query set: returns created profile
 	"""
-	# profile_link = "empty_profile" + username
-	temp_profile = create_temp_profile_link(username)
+	temp_profile = "empty_profile" + username
 	img_path = save_uploaded_image(file)
 	_profile = Profile(profile_image_path=img_path, username=username, profile_name=temp_profile, profile_link=temp_profile, profile_bio="")
 	db.add(_profile)
 	db.commit()
 	db.refresh(_profile)
 	return _profile
+	

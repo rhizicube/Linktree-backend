@@ -2,8 +2,7 @@ from fastapi import FastAPI, APIRouter
 import schemas.models as models
 import uvicorn
 from db_connect.config import postgre_engine
-from router import profile, link, user_profile, setting, profileDetails
-# from router import user_profile, profileDetails
+from router import profile, link, user_profile, setting, profileDetails, analytics
 from db_connect.setup import connect_to_mongo, close_mongo_connection
 from celery_config.celery_utils import create_celery
 from fastapi.middleware.cors import CORSMiddleware
@@ -13,17 +12,15 @@ models.PostgreBase.metadata.create_all(bind=postgre_engine)
 main_router = APIRouter()
 
 def include_routers():
-	main_router.include_router(profile.profile_router, prefix="/api/profiles", tags=["profile"])
-	main_router.include_router(link.link_router, prefix="/api/links", tags=["link"])
-	main_router.include_router(setting.setting_router, prefix="/api/settings", tags=["setting"])
-	main_router.include_router(user_profile.router, prefix="/api", tags=["Visitor"])
-	main_router.include_router(profileDetails.profile_detail_router, prefix='/api/profile', tags=["profiledetails"])
-	# main_router.include_router(view.view_router, tags=["View"])
-	# main_router.include_router(click.click_router, tags=["Click"])
-	main_router.include_router(view_resample.view_router, prefix="/api/view_resample", tags=["ViewResample"])
-	main_router.include_router(click_resample.click_router, prefix="/api/click_resample", tags=["ClickResample"])
-	main_router.include_router(analysis.analysis_router, prefix="/api/analysis", tags=["Analysis"])
-
+	main_router.include_router(profile.profile_router, prefix="/v1.0/api/profiles", tags=["profile"])
+	main_router.include_router(link.link_router, prefix="/v1.0/api/links", tags=["link"])
+	main_router.include_router(setting.setting_router, prefix="/v1.0/api/settings", tags=["setting"])
+	main_router.include_router(user_profile.router, prefix="/v1.0/api", tags=["Visitor"])
+	main_router.include_router(profileDetails.profile_detail_router, prefix='/v1.0/api/profile', tags=["User"])
+	# main_router.include_router(view.view_router, prefix='/v1.0/api/views', tags=["View"])
+	# main_router.include_router(click.click_router, prefix='/v1.0/api/clicks', tags=["Click"])
+	main_router.include_router(analytics.analytics_router, prefix='/v1.0/analytics', tags=["Analytics"])
+	# main_router.include_router(click_resample.click_router, prefix='/v1.0/api/clicksresample', tags=["ClickResample"])
 
 
 def create_app() -> FastAPI:

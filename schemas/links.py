@@ -10,7 +10,7 @@ class LinkSchema(BaseModel):
 	link_name: str
 	link_url: str
 	link_enable:Optional[bool]=True
-	profile_id: int
+	profile: int
 
 	class Config:
 		orm_mode=True

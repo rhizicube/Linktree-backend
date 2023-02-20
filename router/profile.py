@@ -3,6 +3,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.orm import session
 from schemas.profiles import RequestProfile, ResponseProfile, UpdateProfile
 import crud.profiles as profiles
+from fastapi.encoders import jsonable_encoder
 
 
 from db_connect.setup import get_db
@@ -10,7 +11,7 @@ from db_connect.setup import get_db
 profile_router = APIRouter()
 
 
-@profile_router.post("/profile/")
+# @profile_router.post("/profile/")
 async def create(request:RequestProfile, db:session=Depends(get_db)):
 	"""API to create profile
 
@@ -19,7 +20,7 @@ async def create(request:RequestProfile, db:session=Depends(get_db)):
 		db (session, optional): DB connection session for db functionalities. Defaults to Depends(get_db).
 
 	Returns:
-		JSONResponse: Profile created with 200 status if profile is created, else exception text with 400 status
+		JSONResponse: Profile created with 201 status if profile is created, else exception text with 400 status
 	"""
 	try:
 		_profile = profiles.create_profile(db, request.parameter)
@@ -29,7 +30,7 @@ async def create(request:RequestProfile, db:session=Depends(get_db)):
 			return JSONResponse(content={"message": f"Profile Link already exists"}, status_code=status.HTTP_400_BAD_REQUEST)
 		return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)
 
-@profile_router.get("/profile/")
+# @profile_router.get("/profile/")
 async def get(id:int=None, username:str=None, db:session=Depends(get_db)):
 	"""API to get profile
 
@@ -64,7 +65,7 @@ async def get(id:int=None, username:str=None, db:session=Depends(get_db)):
 		return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)
 
 
-@profile_router.put("/profile/")
+# @profile_router.put("/profile/")
 async def update(request:UpdateProfile, id:int=None, db:session=Depends(get_db)):
 	"""API to update profile
 
@@ -111,12 +112,13 @@ async def delete(id:int=None, db:session=Depends(get_db)):
 		return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)
 
 @profile_router.put("/profile/image/")
-async def update_image(username:str, file:UploadFile=File(...), id:int=None, db:session=Depends(get_db)): # mandatory username
+async def update_image(username:str, file:UploadFile=File(...), id:int=None, db:session=Depends(get_db)):
 	"""API to update profile image
 
 	Args:
 		file (UploadFile, optional): Uploaded image. Defaults to File(...).
 		id (int, optional): profile id, pk. Defaults to None.
+		username (str, optional): profile username. Defaults to None.
 		db (session, optional): DB connection session for db functionalities. Defaults to Depends(get_db).
 
 	Returns:
@@ -133,34 +135,22 @@ async def update_image(username:str, file:UploadFile=File(...), id:int=None, db:
 	except Exception as e:
 		return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)
 
-
-	# if id is None:
-	# 	try:
-	# 		_profile = profiles.create_empty_profile(db, file)
-	# 		return JSONResponse(content={"message": f"Profile created"}, status_code=status.HTTP_201_CREATED)
-	# 	except Exception as e:
-	# 		return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)
-	# else:
-	# 	try:
-	# 		_profile = profiles.update_profile_image(db, id, file)
-	# 		return JSONResponse(content={"message": f"Profile {id} updated"}, status_code=status.HTTP_200_OK)
-	# 	except Exception as e:
-	# 		return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)
-
-# create empty profile if image is uploaded without profile
-# @profile_router.post("/profile/image/")
-# async def create_image(file:UploadFile=File(...), db:session=Depends(get_db)):
-	"""API to create profile image
+@profile_router.delete("/profile/image/")
+async def update_image(id:int=None, username:str=None, db:session=Depends(get_db)):
+	"""API to delete profile image
 
 	Args:
-		file (UploadFile, optional): Uploaded image. Defaults to File(...).
+		id (int, optional): profile id, pk. Defaults to None.
 		db (session, optional): DB connection session for db functionalities. Defaults to Depends(get_db).
 
 	Returns:
-		JSONResponse: Profile created with 200 status if profile is created, else exception text with 400 status
+		JSONResponse: Profile updated with 200 status if profile is updated, else exception text with 400 status
 	"""
-	# try:
-	# 	_profile = profiles.create_empty_profile(db, file)
-	# 	return JSONResponse(content={"message": f"Profile created"}, status_code=status.HTTP_201_CREATED)
-	# except Exception as e:
-	# 	return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)
+	try:
+		if id:
+			_profile = profiles.delete_profile_image(db, id=id)
+		elif username:
+			_profile = profiles.delete_profile_image(db, uname=username)
+		return JSONResponse(content={"message": f"Profile {id} updated", "data": jsonable_encoder(_profile)}, status_code=status.HTTP_200_OK)
+	except Exception as e:
+		return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)

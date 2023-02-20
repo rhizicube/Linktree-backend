@@ -56,28 +56,28 @@ async def get(id:int=None, link_id:int=None, view_id:int=None, db:session=Depend
 
 @click_router.put("/click/")
 async def update(id:int, request:UpdateClick, db:session=Depends(get_db)):
-    try:
-        click_id = clicks_resample.get_click_by_id(db=db, id=id)
-        if click_id is not None:
-            _click = clicks_resample.update_click(db=db, id=id, request=request)
-            return JSONResponse(content={"message": f"Click {id} updated"}, status_code=status.HTTP_200_OK)
-        else:
-            return JSONResponse(content={"message": f"Click {id} not found"}, status_code=status.HTTP_404_NOT_FOUND)
-    except Exception as e:
-        return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)
+	try:
+		click_id = clicks_resample.get_click_by_id(db=db, id=id)
+		if click_id is not None:
+			_click = clicks_resample.update_click(db=db, id=id, request=request)
+			return JSONResponse(content={"message": f"Click {id} updated"}, status_code=status.HTTP_200_OK)
+		else:
+			return JSONResponse(content={"message": f"Click {id} not found"}, status_code=status.HTTP_404_NOT_FOUND)
+	except Exception as e:
+		return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)
 
 @click_router.delete("/click/")
 async def delete(id:int=None, db:session=Depends(get_db)):
-    try:
-        if id:
-            click_id = clicks_resample.get_click_by_id(db=db, id=id)
-            if click_id is not None:
-                _click = clicks_resample.delete_click_by_id(db=db, id=id)
-                return JSONResponse(content={"message": f"Click {id} deleted"}, status_code=status.HTTP_200_OK)
-            else:
-                return JSONResponse(content={"message": f"Click {id} not found"}, status_code=status.HTTP_404_NOT_FOUND)
-        else:
-            deleted_rows = clicks_resample.delete_all_clicks(db=db)
-            return JSONResponse(content={"message": f"Clicks deleted"}, status_code=status.HTTP_200_OK)
-    except Exception as e:
-        return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)
+	try:
+		if id:
+			click_id = clicks_resample.get_click_by_id(db=db, id=id)
+			if click_id is not None:
+				_click = clicks_resample.delete_click_by_id(db=db, id=id)
+				return JSONResponse(content={"message": f"Click {id} deleted"}, status_code=status.HTTP_200_OK)
+			else:
+				return JSONResponse(content={"message": f"Click {id} not found"}, status_code=status.HTTP_404_NOT_FOUND)
+		else:
+			deleted_rows = clicks_resample.delete_all_clicks(db=db)
+			return JSONResponse(content={"message": f"Clicks deleted"}, status_code=status.HTTP_200_OK)
+	except Exception as e:
+		return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)

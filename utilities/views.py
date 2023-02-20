@@ -26,7 +26,12 @@ async def create_cookie_id() -> str:
 	return cookie_id
 
 
-def get_ip_location(client_host):
+def get_ip_location(client_host:str):
+	"""Function to get location from IP
+
+	Args:
+		client_host (str): IP address
+	"""
     # If visitor's location to be found from the database corresponding to the type of IP address (IPv4/IPv6)
 	ip_address_type = valid_ip_address(client_host)
 	if ip_address_type == "IPv4":
