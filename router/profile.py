@@ -126,12 +126,20 @@ async def update_image(username:str, file:UploadFile=File(...), id:int=None, db:
 	"""
 	try:
 		_profile = profiles.get_profile_by_user(db, username)
+		response_status = status.HTTP_200_OK
 		if _profile is not None:
 			_profile = profiles.update_profile_image(db, _profile.id, file)
-			return JSONResponse(content={"message": f"Profile {_profile.id} updated"}, status_code=status.HTTP_200_OK)
 		else:
 			_profile = profiles.create_empty_profile(username, db, file)
-			return JSONResponse(content={"message": f"Profile created"}, status_code=status.HTTP_201_CREATED)
+			response_status = status.HTTP_201_CREATED
+		profile_json = jsonable_encoder(_profile)
+		if profile_json["profile_image_path"] not in [None, ""]:
+			profile_json["profile_image_path"] = "media" + profile_json["profile_image_path"].split("media")[-1]
+		if "empty_profile" in profile_json["profile_name"]:
+			profile_json["profile_name"] = ""
+		if "empty_profile" in profile_json["profile_link"]:
+			profile_json["profile_link"] = ""
+		return JSONResponse(content={"message": f"Profile {_profile.id} updated", "data": profile_json}, status_code=response_status)
 	except Exception as e:
 		return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)
 

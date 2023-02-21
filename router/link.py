@@ -124,7 +124,10 @@ async def update_image(request:Request=None, file:UploadFile=None, id:int=None, 
 		else:
 			icon = None
 		_link = links.update_link_image(db, id, file=file, icon=icon)
-		return JSONResponse(content={"message": f"Link {id} updated", "data": jsonable_encoder(_link)}, status_code=status.HTTP_200_OK)
+		link_json = jsonable_encoder(_link)
+		if link_json["link_thumbnail"] not in [None, ""]:
+			link_json["link_thumbnail"] = "media" + link_json["link_thumbnail"].split("media")[-1]
+		return JSONResponse(content={"message": f"Link {id} updated", "data": link_json}, status_code=status.HTTP_200_OK)
 	except Exception as e:
 		return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)
 

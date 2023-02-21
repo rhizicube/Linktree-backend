@@ -96,6 +96,8 @@ async def get_user_profile(url:str, request:Request, db:session=Depends(get_db))
 			resp_data = jsonable_encoder(resp_data)
 			if "empty_profile" in resp_data["profile"]["profile_name"]:
 				resp_data["profile"]["profile_name"] = ""
+			if "empty_profile" in resp_data["profile"]["profile_link"]:
+				resp_data["profile"]["profile_link"] = ""
 			
 			if resp_data["profile"]["profile_image_path"] and os.path.exists(resp_data["profile"]["profile_image_path"]):
 				resp_data["profile"]["profile_image_path"] = "media" + resp_data["profile"]["profile_image_path"].split("media")[-1]

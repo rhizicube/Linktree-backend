@@ -29,11 +29,12 @@ async def get(username:str, db:session=Depends(get_db)):
 	try:
 		# Check if the given username has profile details
 		usernames = profiles.get_all_usernames(db)
+		empty_user_details = {"profile": None, "link": None, "setting": None}
 		if username in usernames:
 			try:
 				_profile = profiles.get_profile_by_user(db, username)
 				if not _profile:
-					return JSONResponse(status_code=status.HTTP_404_NOT_FOUND, content={"message": f"Profile for {username} not found"})
+					return JSONResponse(status_code=status.HTTP_404_NOT_FOUND, content={"message": f"Profile for {username} not found", "data": empty_user_details})
 			except:
 				_profile = None
 			if _profile is not None:
@@ -41,7 +42,7 @@ async def get(username:str, db:session=Depends(get_db)):
 				_links = links.get_link_by_profile(db, _profile.id)
 				_settings = settings.get_setting_by_profile(db, _profile.id)
 			else:
-				return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content={"message":"Profile doesn't exist"})
+				return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content={"message": f"Profile for username {username} doesn't exist", "data": empty_user_details})
 			# Can be converted to json format together
 			resp_data = {"profile":_profile, "link":_links, "settings":_settings}
 			resp_data = jsonable_encoder(resp_data)
@@ -55,12 +56,12 @@ async def get(username:str, db:session=Depends(get_db)):
 
 			# "empty_profile" added to identify user hasnt updated details other than their profile image, so remove it in the response
 			if "empty_profile" in resp_data["profile"]["profile_link"]:
-				resp_data["profile"]["profile_link"] = None
+				resp_data["profile"]["profile_link"] = ""
 			if "empty_profile" in resp_data["profile"]["profile_name"]:
-				resp_data["profile"]["profile_name"] = None
+				resp_data["profile"]["profile_name"] = ""
 			return JSONResponse(status_code=status.HTTP_200_OK, content={"data": resp_data})
 		else:
-			return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content={"message":"Username is required"})
+			return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content={"message": f"Profile for username {username} doesn't exist", "data": empty_user_details})
 	except Exception as e:
 		return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content={"message":str(e)})
 
