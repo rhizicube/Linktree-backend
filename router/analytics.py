@@ -5,7 +5,7 @@ from datetime import datetime as dt
 import pandas as pd
 from crud import profiles
 import json
-from utilities.analysis import get_activity
+from utilities.analysis import get_activity, merge_total_unique_views_clicks, get_views_total_unique, get_clicks_total_unique
 from db_connect.setup import get_db
 
 analytics_router = APIRouter()
@@ -94,7 +94,7 @@ async def get_activity_test(username: str, start_date: dt, end_date: dt, sample_
 
 
 @analytics_router.get("/getactivitycountbyfrequency/")
-async def get_activity_count(username: str, start: dt, end: dt, db:session=Depends(get_db)):
+async def get_activity_by_frequency(username: str, start_date: dt, end_date: dt, db:session=Depends(get_db)):
 	"""API to get activity count for daily, weekly and monthly frequencies
 
 	Args:
@@ -107,54 +107,54 @@ async def get_activity_count(username: str, start: dt, end: dt, db:session=Depen
 		JSONResponse: views, clicks and CTR count between given date range for a user's profile segregated based on daily, weekly and monthly
 	"""
 	try:
-		if not start or not end:
-			return JSONResponse(content={"message": "start and end dates are required"}, status_code=status.HTTP_400_BAD_REQUEST)
+		# Initial checks for input parameters
+		if not start_date or not end_date or end_date < start_date:
+			return JSONResponse(content={"message": "Valid start and end dates are required"}, status_code=status.HTTP_400_BAD_REQUEST)
 		usernames = profiles.get_all_usernames(db)
 		if username not in usernames:
 			return JSONResponse(content={"message": f"Profile for user {username} not found"}, status_code=status.HTTP_404_NOT_FOUND)
 
-		views = db.execute("SELECT session_id, view_count, view_sampled_timestamp FROM ViewsResample WHERE ViewsResample.profile_id = profile_id AND view_sampled_timestamp BETWEEN :start AND :end", {"start": start, "end": end})
+		# Get view count, sampled timestamp and view id for a profile between given time range
+		views = db.execute("SELECT view_count, view_sampled_timestamp, ViewsResample.id FROM ViewsResample, Profile WHERE ViewsResample.profile_id = Profile.id AND Profile.username = :uname AND view_sampled_timestamp BETWEEN :start AND :end", {"uname": username, "start": start_date, "end": end_date})
 		_views_df = pd.DataFrame(views.fetchall())
 		if _views_df.empty:
 			return JSONResponse(content={"message": f"No data found for the specified date range"}, status_code=status.HTTP_404_NOT_FOUND)
 
-		_views_df["view_sampled_timestamp"] = pd.to_datetime(_views_df["view_sampled_timestamp"])
-		views_grouped_by_date = _views_df.groupby([_views_df.view_sampled_timestamp.dt.date])["view_count"].sum()
-		views_unique_grouped_by_date = _views_df.groupby([_views_df.view_sampled_timestamp.dt.date])["session_id"].unique()
+		# Get total total views and unique views grouped by date
+		views_grouped_by_date, views_unique_grouped_by_date = get_views_total_unique(_views_df)
 		
+		# Get links created for user's profile
 		profile_links = db.execute("SELECT Link.id FROM Link, Profile WHERE Profile.id = Link.profile_id AND Profile.username = :uname;", {"uname": username})
 		links = profile_links.mappings().all()
 		if len(links) == 0:
 			print("Links not created by user")
+			clicks_grouped_by_date = pd.DataFrame()
+			clicks_unique_grouped_by_date_view = pd.DataFrame()
+		else:
+			# Raw SQL query to get click count and link id, sampled timestamp and corresponding view id for all the clicks recorded in clicksresample table between given date range for only the list of links queried above
+			click_count = db.execute('SELECT ClicksResample.click_count, ClicksResample.link_id, ClicksResample.click_sampled_timestamp, ClicksResample.view_id FROM ClicksResample, Link WHERE Link.id = ClicksResample.link_id AND link_id in :link_list AND click_sampled_timestamp BETWEEN :start AND :end;', { 'link_list': tuple(x['id'] for x in links), "start": start_date, "end": end_date })
+			click_count = click_count.mappings().all()
+			
+			_clicks_df = pd.DataFrame(click_count)
+			if _clicks_df.empty:
+				print("Clicks not present for profile's links")
+				clicks_grouped_by_date = pd.DataFrame()
+				clicks_unique_grouped_by_date_view = pd.DataFrame()
+			else:
+				# Get total total clicks and unique clicks grouped by date
+				clicks_grouped_by_date, clicks_unique_grouped_by_date_view = get_clicks_total_unique(_clicks_df)
 
-		# Raw SQL query to get click count and link name for all the clicks recorded in clicksresample table between given date range for only the list of links queried above
-		click_count = db.execute('SELECT ClicksResample.click_count, Link.link_name, ClicksResample.link_id, ClicksResample.click_sampled_timestamp FROM ClicksResample, Link WHERE Link.id = ClicksResample.link_id AND link_id in :link_list AND click_sampled_timestamp BETWEEN :start AND :end;', { 'link_list': tuple(x['id'] for x in links), "start": start, "end": end })
-		click_count = click_count.mappings().all()
-		if len(click_count) == 0:
-			return JSONResponse(content={"message": "Data not found for the given date range"}, status_code=status.HTTP_404_NOT_FOUND)
+		# To get daily, weekly and monthly sampled view counts, click counts and CTR
+		view_click_group_merge = merge_total_unique_views_clicks(views_grouped_by_date, clicks_grouped_by_date, views_unique_grouped_by_date, clicks_unique_grouped_by_date_view)
 		
-		_clicks_df = pd.DataFrame(click_count)
-		# To get the total clicks count for each link
-		clicks_grouped_by_date = _clicks_df.groupby([_clicks_df.click_sampled_timestamp.dt.date])["click_count"].sum()
-		clicks_unique_grouped_by_date = _clicks_df.groupby([_clicks_df.click_sampled_timestamp.dt.date])["link_id"].unique()
-		# TODO: to get weekly and monthly grouping
-		view_click_group_merge = pd.concat([views_grouped_by_date, clicks_grouped_by_date, views_unique_grouped_by_date, clicks_unique_grouped_by_date], axis=1)
-		view_click_group_merge.rename(columns={"view_count": "total_views", "click_count": "total_clicks", "session_id": "unique_views", "link_id": "unique_clicks"}, inplace=True)
-		view_click_group_merge["unique_views"] = [len(x) for x in view_click_group_merge["unique_views"]]
-		view_click_group_merge["unique_clicks"] = [len(x) for x in view_click_group_merge["unique_clicks"]]
-		# CTR is calculated by dividing the number of clicks by how many views your profile has received
-		view_click_group_merge["ctr"] = [round((row["total_clicks"]/row["total_views"])*100, 3) if row["total_views"] != 0 else 0 for _, row in view_click_group_merge.iterrows()]
-		view_click_group_merge["date"] = view_click_group_merge.index.astype('str')
-		response_data = view_click_group_merge.to_dict(orient="records")
-		print(response_data)
-
-		return JSONResponse(content={"data": response_data}, status_code=status.HTTP_200_OK)
+		print(view_click_group_merge)
+		return JSONResponse(content={"data": view_click_group_merge}, status_code=status.HTTP_200_OK)
 	except Exception as e:
 		return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)
 
 
 @analytics_router.get("/getactivitycount/")
-async def get(username:str, db:session=Depends(get_db)):
+async def get_activity(username:str, db:session=Depends(get_db)):
 	"""API to get a user's entire views, clicks and CTR
 
 	Args:
@@ -182,7 +182,7 @@ async def get(username:str, db:session=Depends(get_db)):
 		# ctr = total_clicks/total_views
 		ctr=0
 		if total_views != 0 and total_clicks != 0:
-			ctr = round(total_clicks/total_views, 3)
+			ctr = round(total_clicks/total_views*100, 3)
 		return JSONResponse(content={"data": {"views": total_views, "clicks": total_clicks, "ctr": ctr}}, status_code=status.HTTP_200_OK)
 	except Exception as e:
 		return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)
