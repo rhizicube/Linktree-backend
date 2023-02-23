@@ -5,7 +5,7 @@ from datetime import datetime as dt
 import pandas as pd
 from crud import profiles
 import json
-from utilities.analysis import get_activity, merge_total_unique_views_clicks, get_views_total_unique, get_clicks_total_unique
+from utilities.analysis import get_activity, merge_total_unique_views_clicks, get_views_total_unique, get_clicks_total_unique, get_location_wise_counts
 from db_connect.setup import get_db
 
 analytics_router = APIRouter()
@@ -216,6 +216,53 @@ async def get_devices_percentage(username: str, start_date: dt, end_date: dt, db
 		views_df['percent'] = round((views_df['sum'] / views_df['sum'].sum()) * 100, 3)
 		# Formatting response
 		response_data = {row["device_type"]: row["percent"] for _, row in views_df.iterrows()}
+		return JSONResponse(content={"data": response_data}, status_code=status.HTTP_200_OK)
+	except Exception as e:
+		return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)
+
+
+@analytics_router.get("/getcountbylocation/")
+async def get_location_activity(username: str, start_date: dt, end_date: dt, db:session=Depends(get_db)):
+	"""API to get profile's location activity in percentage
+
+	Args:
+		username (str): Username
+		start_date (dt): start time
+		end_date (dt): end time
+		db (session, optional): DB connection session for db functionalities. Defaults to Depends(get_db).
+
+	Returns:
+		JSONResponse: percentage of usage country wise, region wise and city wise
+	"""
+	try:
+		if start_date is None or end_date is None or end_date < start_date:
+			return JSONResponse(content={"message": "Valid start and end date ranges should be provided"}, status_code=status.HTTP_400_BAD_REQUEST)
+
+		# Get view count of each location present for views under the given user's profile
+		views_count = db.execute("SELECT ViewsResample.view_location, ViewsResample.view_count, ViewsResample.id FROM ViewsResample, Profile WHERE Profile.id = ViewsResample.profile_id AND Profile.username = :uname AND view_sampled_timestamp BETWEEN :start AND :end;", {"uname": username, "start": start_date, "end": end_date}).fetchall()
+		if len(views_count) == 0:
+			return JSONResponse(content={"message": "Data not found for the given date range"}, status_code=status.HTTP_404_NOT_FOUND)
+		views_count = [x._asdict() for x in views_count] # To convert sqlalchemy.engine.row.RowMapping to dictionary (to access view_location easily)
+
+		views_df = pd.DataFrame(views_count)
+		# Get country, region and city wise views count
+		views_data = get_location_wise_counts(views_df, "view_count")
+
+		# Get click count of each location present for views under the given user's profile
+		print(tuple(x['id'] for x in views_count))
+		clicks_count = db.execute("SELECT ViewsResample.view_location, ClicksResample.click_count FROM ViewsResample, ClicksResample WHERE ClicksResample.view_id IN :view_list AND click_sampled_timestamp BETWEEN :start AND :end;", {"view_list": tuple(x['id'] for x in views_count), "start": start_date, "end": end_date}).fetchall()
+		if len(clicks_count) == 0:
+			print("Clicks not found for the given date range")
+			clicks_data = {"country": {}, "region": {}, "city": {}}
+		else:
+			views_count = [x._asdict() for x in clicks_count] # To convert sqlalchemy.engine.row.RowMapping to dictionary (to access view_location easily)
+
+			clicks_df = pd.DataFrame(clicks_count)
+			# Get country, region and city wise clicks count
+			clicks_data = get_location_wise_counts(clicks_df, "click_count")
+
+		# Get formatted response
+		response_data = {"views": views_data, "clicks": clicks_data}
 		return JSONResponse(content={"data": response_data}, status_code=status.HTTP_200_OK)
 	except Exception as e:
 		return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)

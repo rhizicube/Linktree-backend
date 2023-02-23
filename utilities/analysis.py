@@ -94,6 +94,41 @@ def merge_total_unique_views_clicks(views_grouped_by_date:pd.DataFrame, clicks_g
 	return view_click_group_merge
 
 
+def get_location_wise_counts(count_df:pd.DataFrame, groupby_column:str) -> dict:
+	"""Function to get view/click counts grouped by country, region and city
+
+	Args:
+		count_df (pd.DataFrame): ViewsResample details or ClicksResample details of a profile
+		groupby_column (str): Column name for getting the aggregated values
+
+	Returns:
+		dict: Country, region and city wise counts
+	"""
+	count_df.dropna(inplace=True) # If there are any rows having no location information
+	# Get country, region and city in separate columns
+	count_df["country"] = [x["country"] if x not in [None, "", {}] else None for x in count_df["view_location"]]
+	count_df["region"] = [x["region"] if x not in [None, "", {}] else None for x in count_df["view_location"]]
+	count_df["city"] = [x["city"] if x not in [None, "", {}] else None for x in count_df["view_location"]]
+	# Get count grouped by country, region and city
+	count_grouped_by_country = count_df.groupby([count_df.country])[groupby_column].sum()
+	count_grouped_by_region = count_df.groupby([count_df.country, count_df.region])[groupby_column].sum().reset_index()
+	count_grouped_by_city = count_df.groupby([count_df.region, count_df.city])[groupby_column].sum().reset_index()
+	count_data = {"country": count_grouped_by_country.to_dict(), "region": {}, "city": {}}
+	# Map region to country
+	for _, row in count_grouped_by_region.iterrows():
+		if row["country"] in count_data["region"].keys():
+			count_data["region"][row["country"]][row["region"]] = row[groupby_column]
+		else:
+			count_data["region"][row["country"]] = {row["region"]: row[groupby_column]}
+	# Map city to region
+	for _, row in count_grouped_by_city.iterrows():
+		if row["region"] in count_data["city"].keys():
+			count_data["city"][row["region"]][row["city"]] = row[groupby_column]
+		else:
+			count_data["city"][row["region"]] = {row["city"]: row[groupby_column]}
+	return count_data
+
+
 
 def get_activity(username: str, start: dt, end: dt, freq: str, db : session = get_db()):
 	try:
