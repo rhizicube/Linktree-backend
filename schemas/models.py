@@ -15,7 +15,7 @@ class Profile(PostgreBase):
 	__tablename__ = "profile"
 	
 	id=Column(Integer, primary_key=True, autoincrement=True)
-	profile_name=Column(String, nullable=True, unique=True)
+	profile_name=Column(String, nullable=True)
 	profile_link=Column(String, nullable=False, unique=True)
 	profile_bio=Column(Text, nullable=True)
 	profile_image_path=Column(String, nullable=True)
@@ -35,14 +35,17 @@ class Link(PostgreBase):
 
 	id=Column(Integer, primary_key=True, autoincrement=True)
 	link_name=Column(String, nullable=False)
-	link_url=Column(String, nullable=False, unique=True)
+	link_url=Column(String, nullable=False, unique=False)
 	link_tiny=Column(String, nullable=False, unique=True)
 	link_thumbnail=Column(String, nullable=True)
 	link_enable=Column(Boolean, nullable=False)
+	link_isdeleted=Column(Boolean, nullable=True, default=False)
 	link_created=Column(DateTime, server_default=func.now())
-	profile_id=Column(Integer, ForeignKey("profile.id"), nullable=False, server_onupdate="CASCADE", server_ondelete="CASCADE")
+	profile_id=Column(Integer, ForeignKey("profile.id"), nullable=True, server_onupdate="CASCADE", server_ondelete="CASCADE")
+	setting_id=Column(Integer, ForeignKey("setting.id"), nullable=True)
 
 	profile=relationship("Profile", back_populates="links")
+	settings=relationship("Setting", back_populates="links")
 	clicks=relationship("ClicksResample", back_populates="link")
 
 
@@ -52,9 +55,12 @@ class Setting(PostgreBase):
 	id=Column(Integer, primary_key=True, autoincrement=True)
 	# payment_option=Column(String, nullable=False)
 	# profile_subscribe=Column(Boolean, nullable=False)
-	profile_social = Column(JSON, nullable=True)
+	# profile_social = Column(JSON, nullable=True)
 	profile_id = Column(Integer, ForeignKey("profile.id"), nullable=False, server_onupdate="CASCADE", server_ondelete="CASCADE")
 	profile = relationship("Profile", back_populates="settings")
+
+	# links = relationship("Link", cascade="all,delete", backref="parent")
+	links=relationship("Link", back_populates="settings")
 
 
 class Subscription(PostgreBase):

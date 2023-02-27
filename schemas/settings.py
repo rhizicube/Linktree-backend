@@ -7,7 +7,7 @@ from pydantic.generics import GenericModel
 T = TypeVar('T') # Can be anything
 
 class SettingSchema(BaseModel):
-	profile_social: dict
+	# profile_social: dict
 	profile: int
 
 	class Config:
@@ -22,8 +22,8 @@ class ResponseSetting(GenericModel, Generic[T]):
 	message: Optional[str]=None
 	result: Optional[T]=None
 
-class SettingUpdateSchema(BaseModel):
-	profile_social: Optional[dict]=None
+# class SettingUpdateSchema(BaseModel):
+# 	profile_social: Optional[dict]=None
 
-class UpdateSetting(BaseModel):
-	parameter: SettingUpdateSchema = Field(...)
+# class UpdateSetting(BaseModel):
+# 	parameter: SettingUpdateSchema = Field(...)
