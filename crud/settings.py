@@ -53,7 +53,7 @@ def create_setting(db:session, setting:SettingSchema):
 	Returns:
 		orm query set: returns created setting
 	"""
-	_setting = Setting(profile_social=setting.profile_social, profile_id=setting.profile)
+	_setting = Setting(profile_id=setting.profile)
 	db.add(_setting)
 	print("Here")
 	db.commit()
@@ -102,20 +102,20 @@ def delete_setting_by_id(db:session, id:int):
 		raise HTTPException(status_code=404, detail="Setting not found")
 
 
-def update_setting(db:session, id:int, profile_social=None):
-	"""Function to update setting
+# def update_setting(db:session, id:int, profile_social=None):
+# 	"""Function to update setting
 
-	Args:
-		db (session): DB connection session for ORM functionalities
-		id (int): setting primary key
-		profile_social (dict, optional): Social icons. Defaults to None.
+# 	Args:
+# 		db (session): DB connection session for ORM functionalities
+# 		id (int): setting primary key
+# 		profile_social (dict, optional): Social icons. Defaults to None.
 
-	Returns:
-		orm query set: returns updated setting
-	"""
-	_setting = db.query(Setting).get(id)
-	if profile_social is not None:
-		_setting.profile_social = profile_social
-	db.commit()
-	db.refresh(_setting)
-	return _setting
+# 	Returns:
+# 		orm query set: returns updated setting
+# 	"""
+# 	_setting = db.query(Setting).get(id)
+# 	if profile_social is not None:
+# 		_setting.profile_social = profile_social
+# 	db.commit()
+# 	db.refresh(_setting)
+# 	return _setting
