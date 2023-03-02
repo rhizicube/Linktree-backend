@@ -55,7 +55,7 @@ def create_view(db:session, view:ViewSchema):
 	Returns:
 		orm query set: returns the created view
 	"""
-	_view = ViewsResample(session_id=view.session_id, view_count=view.view_count, device_type=view.device_type, profile_id=view.profile, view_sampled_timestamp=view.view_sampled_timestamp)
+	_view = ViewsResample(session_id=view.session_id, view_count=view.view_count, device_type=view.device_type, profile_id=view.profile, view_sampled_timestamp=view.view_sampled_timestamp, view_location=view.view_location)
 	db.add(_view)
 	db.commit()
 	db.refresh(_view)

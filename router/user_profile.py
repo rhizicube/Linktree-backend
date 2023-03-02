@@ -33,14 +33,21 @@ async def get_user_profile_details(url:str, request:Request, db:session):
 		return {"profile": None, "link": None, "setting": None}, response_cookie
 	_link = links.get_link_by_profile(db, _profile.id)
 	_setting = settings.get_setting_by_profile(db, _profile.id)
+	if _setting is None:
+		_setting = {}
+		_profile_social = {}
+	else:
+		_profile_social = links.get_link_by_setting(db, _setting.id)
 	resp_data = {"profile": _profile, "link": _link, "setting": _setting}
+	resp_data = jsonable_encoder(resp_data)
+	resp_data["setting"]["profile_social"] = jsonable_encoder(_profile_social)
 	# Save view information
 	device, location = get_client_details(request)
 	await views.create_view_raw(cookie_id, device, location, _profile.id)
 	return resp_data, response_cookie
 
 
-async def save_click(link:str, request:Request):
+async def save_click(link:str, profile, request:Request):
 	"""Function to save click information
 
 	Args:
@@ -57,6 +64,9 @@ async def save_click(link:str, request:Request):
 	if not session_id:
 		session_id = await create_cookie_id()
 		response_cookie = session_id
+		# Save view information for new cookie
+		device, location = get_client_details(request)
+		await views.create_view_raw(session_id, device, location, profile)
 	# Save click information
 	await clicks.create_click_raw(session_id, link)
 	return response_cookie
@@ -85,7 +95,7 @@ async def get_user_profile(url:str, request:Request, db:session=Depends(get_db))
 		if url in all_short_links:
 			# given URL is a tiny/shortened link. API needs to redirect to the original link to which the tiny link is pointed to
 			link_to_redirect = links.get_link_by_tiny_url(url, db)
-			response_cookie = await save_click(url, request)
+			response_cookie = await save_click(url, link_to_redirect.profile_id, request)
 			response = RedirectResponse(link_to_redirect.link_url)
 			if response_cookie:
 				response.set_cookie(key="linktree_visitor", value=response_cookie, expires=100)
@@ -93,9 +103,10 @@ async def get_user_profile(url:str, request:Request, db:session=Depends(get_db))
 		else:
 			# given URL is a custom link. All profile details (profile, links, settings) linked to the custom link is sent back as response
 			resp_data, response_cookie = await get_user_profile_details(url, request, db)
-			resp_data = jsonable_encoder(resp_data)
 			if "empty_profile" in resp_data["profile"]["profile_name"]:
 				resp_data["profile"]["profile_name"] = ""
+			if "empty_profile" in resp_data["profile"]["profile_link"]:
+				resp_data["profile"]["profile_link"] = ""
 			
 			if resp_data["profile"]["profile_image_path"] and os.path.exists(resp_data["profile"]["profile_image_path"]):
 				resp_data["profile"]["profile_image_path"] = "media" + resp_data["profile"]["profile_image_path"].split("media")[-1]

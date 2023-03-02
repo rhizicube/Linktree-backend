@@ -1,7 +1,6 @@
 from sqlalchemy.orm import session
 from schemas.models import Link
 from schemas.links import LinkSchema
-from .profiles import get_profile_by_id
 from fastapi import HTTPException, UploadFile
 import secrets, os, string
 from core.settings import settings
@@ -45,7 +44,20 @@ def get_link_by_profile(db:session, profile:int):
 	Returns:
 		orm query set: returns the queried link
 	"""
-	return db.query(Link).filter(Link.profile_id == profile).all()
+	return db.query(Link).filter(Link.profile_id == profile, Link.link_isdeleted == False).all()
+
+
+def get_link_by_setting(db:session, setting:int):
+	"""Function to get link for the given setting
+
+	Args:
+		db (session): DB connection session for ORM functionalities
+		setting (int): setting_id, foreign key
+
+	Returns:
+		orm query set: returns the queried link
+	"""
+	return db.query(Link).filter(Link.setting_id == setting, Link.link_isdeleted == False).all()
 
 
 def create_little_link(db:session) -> str:
@@ -80,7 +92,7 @@ def create_link(db:session, link:LinkSchema):
 		orm query set: returns created link
 	"""
 	short_url = create_little_link(db)
-	_link = Link(link_name=link.link_name, link_url=link.link_url, link_enable=link.link_enable, link_tiny=short_url, profile_id=get_profile_by_id(db, link.profile).id)
+	_link = Link(link_name=link.link_name, link_url=link.link_url, link_enable=link.link_enable, link_tiny=short_url, profile_id=link.profile, setting_id=link.setting)
 	db.add(_link)
 	db.commit()
 	db.refresh(_link)
@@ -98,13 +110,13 @@ def delete_all_links(db:session):
 	"""
 	try:
 		_links = db.query(Link)
-		_link_thumbnails = [l.link_thumbnail for l in _links]
-		deleted_rows = _links.delete()
+		for l in _links:
+			l.link_isdeleted = True
+			if l.link_thumbnail and os.path.exists(l.link_thumbnail):
+				os.remove(l.link_thumbnail)
 		db.commit()
-		for l in _link_thumbnails:
-			if l and os.path.exists(l):
-				os.remove(l)
-		return deleted_rows
+		db.refresh(_links)
+		return len(_links)
 	except Exception as e:
 		db.rollback()
 
@@ -124,7 +136,7 @@ def delete_link_by_id(db:session, id:int):
 	"""
 	_link = db.query(Link).get(id)
 	if _link:
-		db.delete(_link)
+		_link.link_isdeleted = True
 		db.commit()
 		if _link.link_thumbnail and os.path.exists(_link.link_thumbnail):
 			os.remove(_link.link_thumbnail)
@@ -216,7 +228,7 @@ def get_all_tiny_links(db:session):
 	Returns:
 		list: returns list of tiny links
 	"""
-	urls = db.query(Link).with_entities(Link.link_tiny).all()
+	urls = db.query(Link).filter(Link.link_isdeleted == False).with_entities(Link.link_tiny).all()
 	urls = [u[0] for u in urls]
 	return urls
 

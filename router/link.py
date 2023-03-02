@@ -30,7 +30,7 @@ async def create(request:RequestLink, db:session=Depends(get_db)):
 		return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)
 
 # @link_router.get("/link/")
-async def get(id:int=None, profile_id:int=None, db:session=Depends(get_db)):
+async def get(id:int=None, profile_id:int=None, setting_id:int=None, db:session=Depends(get_db)):
 	"""API to get link
 
 	Args:
@@ -53,7 +53,13 @@ async def get(id:int=None, profile_id:int=None, db:session=Depends(get_db)):
 			if _link:
 				return ResponseLink(code=status.HTTP_200_OK, status="OK", result=_link, message="Success").dict(exclude_none=True)
 			else:
-				return JSONResponse(content={"message": f"Link {id} not found"}, status_code=status.HTTP_404_NOT_FOUND)
+				return JSONResponse(content={"message": f"Link for profile id {profile_id} not found"}, status_code=status.HTTP_404_NOT_FOUND)
+		elif setting_id:
+			_link = links.get_link_by_setting(db, setting_id)
+			if _link:
+				return ResponseLink(code=status.HTTP_200_OK, status="OK", result=_link, message="Success").dict(exclude_none=True)
+			else:
+				return JSONResponse(content={"message": f"Link for setting id {setting_id} not found"}, status_code=status.HTTP_404_NOT_FOUND)
 		else:
 			_link = links.get_all_links(db=db)
 			return ResponseLink(code=status.HTTP_200_OK, status="OK", result=_link, message="Success").dict(exclude_none=True)
@@ -124,7 +130,10 @@ async def update_image(request:Request=None, file:UploadFile=None, id:int=None, 
 		else:
 			icon = None
 		_link = links.update_link_image(db, id, file=file, icon=icon)
-		return JSONResponse(content={"message": f"Link {id} updated", "data": jsonable_encoder(_link)}, status_code=status.HTTP_200_OK)
+		link_json = jsonable_encoder(_link)
+		if link_json["link_thumbnail"] not in [None, ""]:
+			link_json["link_thumbnail"] = "media" + link_json["link_thumbnail"].split("media")[-1]
+		return JSONResponse(content={"message": f"Link {id} updated", "data": link_json}, status_code=status.HTTP_200_OK)
 	except Exception as e:
 		return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)
 
