@@ -25,11 +25,13 @@ PostgreBase = declarative_base()
 
 
 """To configure connection to PostgreSQL DB"""
-
-MONGO_DATABASE_URL=f"{settings.MONGO_DB_ENGINE}://{urllib.parse.quote_plus(settings.MONGO_DB_USER)}:{urllib.parse.quote_plus(settings.MONGO_DB_PASS)}@{settings.MONGO_DB_HOST}/{settings.MONGO_DB_NAME}?retryWrites=true&w=majority"
+if settings.MONGO_DB_HOST == "localhost":
+	MONGO_DATABASE_URL=f"{settings.MONGO_DB_ENGINE}://{urllib.parse.quote_plus(settings.MONGO_DB_USER)}:{urllib.parse.quote_plus(settings.MONGO_DB_PASS)}@{settings.MONGO_DB_HOST}/{settings.MONGO_DB_NAME}?retryWrites=true&w=majority"
+else:
+	MONGO_DATABASE_URL=f"{settings.MONGO_DB_ENGINE}://{urllib.parse.quote_plus(settings.MONGO_DB_USER)}:{urllib.parse.quote_plus(settings.MONGO_DB_PASS)}@{settings.MONGO_DB_HOST}/{settings.MONGO_DB_NAME}?authSource=admin&retryWrites=true&w=majority"
 
 class MongoDataBase:
-    client: motor.motor_asyncio.AsyncIOMotorClient = None
-    database: motor.motor_asyncio.AsyncIOMotorDatabase = None
+	client: motor.motor_asyncio.AsyncIOMotorClient = None
+	database: motor.motor_asyncio.AsyncIOMotorDatabase = None
 
 mongoDB = MongoDataBase()

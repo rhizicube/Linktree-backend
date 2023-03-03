@@ -1,14 +1,26 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, APIRouter
 import schemas.models as models
 import uvicorn
 from db_connect.config import postgre_engine
-# from router import user, profile, link, trials, user_profile, setting, view, click, profileDetails
-from router import user_profile, profileDetails
+from router import profile, link, user_profile, setting, profileDetails, analytics
 from db_connect.setup import connect_to_mongo, close_mongo_connection
 from celery_config.celery_utils import create_celery
 from fastapi.middleware.cors import CORSMiddleware
 
 models.PostgreBase.metadata.create_all(bind=postgre_engine)
+
+main_router = APIRouter()
+
+def include_routers():
+	main_router.include_router(profile.profile_router, prefix="/v1.0/api/profiles", tags=["profile"])
+	main_router.include_router(link.link_router, prefix="/v1.0/api/links", tags=["link"])
+	main_router.include_router(setting.setting_router, prefix="/v1.0/api/settings", tags=["setting"])
+	main_router.include_router(user_profile.router, prefix="/v1.0/api", tags=["Visitor"])
+	main_router.include_router(profileDetails.profile_detail_router, prefix='/v1.0/api/profile', tags=["User"])
+	# main_router.include_router(view.view_router, prefix='/v1.0/api/views', tags=["View"])
+	# main_router.include_router(click.click_router, prefix='/v1.0/api/clicks', tags=["Click"])
+	main_router.include_router(analytics.analytics_router, prefix='/v1.0/analytics', tags=["Analytics"])
+	# main_router.include_router(click_resample.click_router, prefix='/v1.0/api/clicksresample', tags=["ClickResample"])
 
 
 def create_app() -> FastAPI:
@@ -17,15 +29,8 @@ def create_app() -> FastAPI:
 						  version="1.0.0", )
 
 	current_app.celery_app = create_celery()
-	# current_app.include_router(user.user_router, prefix="/api/users", tags=["user"])
-	# current_app.include_router(profile.profile_router, prefix="/api/profiles", tags=["profile"])
-	# current_app.include_router(link.link_router, prefix="/api/links", tags=["link"])
-	# current_app.include_router(setting.setting_router, prefix="/api/settings", tags=["setting"])
-	# current_app.include_router(trials.router)
-	current_app.include_router(user_profile.router, tags=["Visitor"])
-	current_app.include_router(profileDetails.profile_detail_router, prefix='/api/profile', tags=["User"])
-	# current_app.include_router(view.view_router, tags=["View"])
-	# current_app.include_router(click.click_router, tags=["Click"])
+	include_routers()
+	current_app.include_router(main_router)
 	return current_app
 
 

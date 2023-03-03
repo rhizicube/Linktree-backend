@@ -10,9 +10,9 @@ class ProfileSchema(BaseModel):
 	profile_name: str
 	profile_link: str
 	profile_bio: Optional[Text]=None
+	profile_description:Optional[dict]=None
 	username: str
-	subscription_id: int=None
-	profile_image_path:Optional[str]=None
+	# subscription_id: int=None
 
 	class Config:
 		orm_mode=True
@@ -30,6 +30,7 @@ class ProfileUpdateSchema(BaseModel):
 	profile_name: str
 	profile_link: str
 	profile_bio: Optional[str]=None
+	profile_description: Optional[dict]=None
 
 class UpdateProfile(BaseModel):
 	parameter: ProfileUpdateSchema = Field(...)

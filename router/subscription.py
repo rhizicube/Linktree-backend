@@ -22,10 +22,11 @@ async def create(request:RequestSubscription, db:session=Depends(get_db)):
     """
     try:
         _subscription = subscriptions.create_subscription(db, request.parameter)
-        return JSONResponse(content={"message": f"Subsciption {_subscription.id} created"}, status_code=status.HTTP_201_CREATED)
+        return JSONResponse(content={"message": f"Subscription {_subscription.id} created"}, status_code=status.HTTP_201_CREATED)
     except Exception as e:
         print("Error")
         return ResponseSubscription(code=status.HTTP_400_BAD_REQUEST, status="BAD REQUEST", message=str(e)).dict(exclude_none=True)
+
 
 @subscription_router.get("/subscriptions/")
 async def get(id:int=None, db:session=Depends(get_db)):
@@ -42,13 +43,19 @@ async def get(id:int=None, db:session=Depends(get_db)):
     except Exception as e:
         return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)
 
+
 @subscription_router.put("/subscriptions/")
 async def update(id:int, request:UpdateSubscription, db:session=Depends(get_db)):
     try:
-        _subscription = subscriptions.update_subscription(db, id, request.parameter)
-        return JSONResponse(content={"message": f"Subscription {id} updated"}, status_code=status.HTTP_200_OK)
+        sub_id = subscriptions.get_subscription_by_id(db, id)
+        if sub_id is not None:
+            _subscription = subscriptions.update_subscription(db, id, request.parameter.subscription_description, request.parameter.subscription_reminder, request.parameter.subscription_type, request.parameter.subscription_name)
+            return JSONResponse(content={"message": f"Subscription {id} updated"}, status_code=status.HTTP_200_OK)
+        else:
+            return JSONResponse(content={"message": f"Subscription {id} not found"}, status_code=status.HTTP_404_NOT_FOUND)
     except Exception as e:
         return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)
+
 
 @subscription_router.delete("/subscriptions/")
 async def delete(id:int=None, db:session=Depends(get_db)):
@@ -58,6 +65,6 @@ async def delete(id:int=None, db:session=Depends(get_db)):
             return JSONResponse(content={"message": f"Subscription {id} deleted"}, status_code=status.HTTP_200_OK)
         else:
             deleted_rows = subscriptions.delete_all_subscriptions(db)
-            return JSONResponse(content={"message": "All subscriptions deleted"}, status_code=status.HTTP_200_OK)
+            return JSONResponse(content={"message": f"{deleted_rows} subscriptions deleted"}, status_code=status.HTTP_200_OK)
     except Exception as e:
         return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)

@@ -1,14 +1,14 @@
 from fastapi import APIRouter, Depends, status
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import session
-from schemas.settings import RequestSetting, ResponseSetting, UpdateSetting
+from schemas.settings import RequestSetting, ResponseSetting#, UpdateSetting
 import crud.settings as settings
 
 from db_connect.setup import get_db
 setting_router = APIRouter()
 
 
-@setting_router.post("/setting/")
+# @setting_router.post("/setting/")
 async def create(request:RequestSetting, db:session=Depends(get_db)):
 	"""API to create setting
 
@@ -25,7 +25,7 @@ async def create(request:RequestSetting, db:session=Depends(get_db)):
 	except Exception as e:
 		return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)
 
-@setting_router.get("/setting/")
+# @setting_router.get("/setting/")
 async def get(id:int=None, profile:int=None, db:session=Depends(get_db)):
 	"""API to get profile setting
 
@@ -56,23 +56,27 @@ async def get(id:int=None, profile:int=None, db:session=Depends(get_db)):
 	except Exception as e:
 		return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)
 
-@setting_router.put("/setting/")
-async def update(request:UpdateSetting, id:int, db:session=Depends(get_db)):
-	"""API to update profile setting
+# @setting_router.put("/setting/")
+# async def update(request:UpdateSetting, id:int, db:session=Depends(get_db)):
+# 	"""API to update profile setting
 
-	Args:
-		request (UpdateSetting): Serialized request data
-		id (int): Setting id, pk
-		db (session, optional): DB connection session for db functionalities. Defaults to Depends(get_db).
+# 	Args:
+# 		request (UpdateSetting): Serialized request data
+# 		id (int): Setting id, pk
+# 		db (session, optional): DB connection session for db functionalities. Defaults to Depends(get_db).
 
-	Returns:
-		JSONResponse: Setting updated with 200 status if setting is updated, else exception text with 400 status
-	"""
-	try:
-		_setting = settings.update_setting(db, id, request.parameter.profile_social)
-		return JSONResponse(content={"message": f"Setting {id} updated"}, status_code=status.HTTP_200_OK)
-	except Exception as e:
-		return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)
+# 	Returns:
+# 		JSONResponse: Setting updated with 200 status if setting is updated, else exception text with 400 status
+# 	"""
+# 	try:
+# 		setting_id = settings.get_setting_by_id(db, id)
+# 		if setting_id is not None:
+# 			_setting = settings.update_setting(db, id, request.parameter.profile_social)
+# 			return JSONResponse(content={"message": f"Setting {id} updated"}, status_code=status.HTTP_200_OK)
+# 		else:
+# 			return JSONResponse(content={"message": f"Setting {id} not found"}, status_code=status.HTTP_404_NOT_FOUND)
+# 	except Exception as e:
+# 		return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)
 
 @setting_router.delete("/setting/")
 async def delete(id:int=None, db:session=Depends(get_db)):
@@ -87,8 +91,12 @@ async def delete(id:int=None, db:session=Depends(get_db)):
 	"""
 	try:
 		if id:
-			_setting = settings.delete_setting_by_id(db, id)
-			return JSONResponse(content={"message": f"Setting {id} deleted"}, status_code=status.HTTP_200_OK)
+			setting_id = settings.get_setting_by_id(db, id)
+			if setting_id is not None:
+				_setting = settings.delete_setting_by_id(db, id)
+				return JSONResponse(content={"message": f"Setting {id} deleted"}, status_code=status.HTTP_200_OK)
+			else:
+				return JSONResponse(content={"message": f"Setting {id} not found"}, status_code=status.HTTP_404_NOT_FOUND)
 		else:
 			deleted_rows = settings.delete_all_settings(db)
 			return JSONResponse(content={"message": f"All {deleted_rows} settings deleted"}, status_code=status.HTTP_200_OK)

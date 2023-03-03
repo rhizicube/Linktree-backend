@@ -70,7 +70,7 @@ def create_profile(db:session, profile:ProfileSchema):
 	Returns:
 		orm query set: returns created profile
 	"""
-	_profile = Profile(profile_name=profile.profile_name, profile_link=profile.profile_link, profile_bio=profile.profile_bio, username=profile.username)
+	_profile = Profile(profile_name=profile.profile_name, profile_link=profile.profile_link, profile_bio=profile.profile_bio, profile_description=profile.profile_description, username=profile.username)
 	db.add(_profile)
 	db.commit()
 	db.refresh(_profile)
@@ -106,7 +106,8 @@ def delete_all_profiles(db:session):
 		deleted_rows = _profiles.delete()
 		db.commit()
 		for p in _profile_img_paths:
-			os.remove(p.profile_image_path)
+			if p and os.path.exists(p):
+				os.remove(p)
 		return deleted_rows
 	except Exception as e:
 		db.rollback()
@@ -129,14 +130,15 @@ def delete_profile_by_id(db:session, id:int):
 	if _profile:
 		db.delete(_profile)
 		db.commit()
-		os.remove(_profile.profile_image_path)
+		if _profile.profile_image_path and os.path.exists(_profile.profile_image_path):
+			os.remove(_profile.profile_image_path)
 		return _profile
 	else:
 		db.rollback()
 		raise HTTPException(status_code=400, detail="Profile not found")
 
 
-def update_profile(db:session, id:int, bio:str=None, name:str=None, url:str=None):
+def update_profile(db:session, id:int, bio:str=None, name:str=None, url:str=None, desc=None):
 	"""Function to update profile
 
 	Args:
@@ -150,6 +152,8 @@ def update_profile(db:session, id:int, bio:str=None, name:str=None, url:str=None
 		orm query set: returns updated profile
 	"""
 	_profile = get_profile_by_id(db, id)
+	if not _profile:
+		return
 	
 	if bio is not None:
 		_profile.profile_bio = bio
@@ -157,7 +161,8 @@ def update_profile(db:session, id:int, bio:str=None, name:str=None, url:str=None
 		_profile.profile_name = name
 	if url is not None:
 		_profile.profile_link = url
-	
+	if desc is not [None, {}]:
+		_profile.profile_description = desc
 	db.commit()
 	db.refresh(_profile)
 	return _profile
@@ -174,10 +179,8 @@ def update_profile_image(db:session, id:int, file:UploadFile=File(...)):
 	Returns:
 		orm query set: returns updated profile
 	"""
-	print(type(file))
 	_profile = get_profile_by_id(db, id)
 	img_path = save_uploaded_image(file)
-	print('>>>>>>>>', _profile.profile_image_path)
 	if _profile.profile_image_path not in [None, ""]:
 		os.remove(_profile.profile_image_path)
 	_profile.profile_image_path = img_path
@@ -185,3 +188,46 @@ def update_profile_image(db:session, id:int, file:UploadFile=File(...)):
 	db.commit()
 	db.refresh(_profile)
 	return _profile
+
+
+def delete_profile_image(db:session, id:int=None, uname:str=None):
+	"""Function to delete profile image from DB and media folder
+
+	Args:
+		db (session): DB connection session for ORM functionalities
+		id (int, optional): Profile id, pk. Defaults to None.
+		uname (str, optional): Username. Defaults to None.
+
+	Returns:
+		orm query set: returns updated profile
+	"""
+	if id:
+		_profile = get_profile_by_id(db, id)
+	else:
+		_profile = get_profile_by_user(db, uname)
+	if _profile.profile_image_path not in [None, ""]:
+		os.remove(_profile.profile_image_path)
+	_profile.profile_image_path = None
+
+	db.commit()
+	db.refresh(_profile)
+	return _profile
+
+
+def create_empty_profile(username:str, db:session, file:UploadFile=File(...)):
+	"""Function to create empty profile if image is uploaded without profile information
+
+	Args:
+		db (session): DB connection session for ORM functionalities
+
+	Returns:
+		orm query set: returns created profile
+	"""
+	temp_profile = "empty_profile" + username
+	img_path = save_uploaded_image(file)
+	_profile = Profile(profile_image_path=img_path, username=username, profile_name=temp_profile, profile_link=temp_profile, profile_bio="")
+	db.add(_profile)
+	db.commit()
+	db.refresh(_profile)
+	return _profile
+	
