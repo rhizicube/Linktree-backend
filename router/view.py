@@ -33,6 +33,7 @@ async def get_view(id: str = None, profile:int = None):
 
 	Args:
 		id (str, optional): View id, pk. Defaults to None.
+		profile (int, optional): Profile id, fk. Defaults to None.
 
 	Returns:
 		JSONResponse: Serialized views data with 200 status if view is present, else exception text with 400 status if exception occurred, else view not found with 404 status

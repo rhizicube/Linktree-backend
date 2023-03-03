@@ -4,8 +4,7 @@ from sqlalchemy.orm import session
 from datetime import datetime as dt
 import pandas as pd
 from crud import profiles
-import json
-from utilities.analysis import get_activity, merge_total_unique_views_clicks, get_views_total_unique, get_clicks_total_unique, get_location_wise_counts
+from utilities.analysis import merge_total_unique_views_clicks, get_views_total_unique, get_clicks_total_unique, get_location_wise_counts
 from db_connect.setup import get_db
 
 analytics_router = APIRouter()
@@ -49,46 +48,6 @@ async def get_count_by_link(username:str, start_date:dt=None, end_date:dt=None, 
 		for index, row in clicks_grouped_by_link.items():
 			clicks_response_data[index] = row
 		return JSONResponse(content={"data": clicks_response_data}, status_code=status.HTTP_200_OK)
-	except Exception as e:
-		return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)
-
-
-# @analytics_router.get("/getactivitycountbyfrequency/")
-async def get_activity_test(username: str, start_date: dt, end_date: dt, sample_frequency: str, db:session=Depends(get_db)):
-	"""API to get User's profile activity by frequency
-
-	Args:
-		username (str): Username
-		start_date (dt): start time
-		end_date (dt): end time
-		sample_frequency (str): sample data on a daily/weekly/monthly basis
-		db (session, optional): DB connection session for db functionalities. Defaults to Depends(get_db).
-
-	Returns:
-		JSONResponse: clicks, view counts and CTR for the given date range
-	"""
-	try:
-		usernames = profiles.get_all_usernames(db)
-		if username not in usernames:
-			return JSONResponse(content={"message": f"User with username {username} not found"}, status_code=status.HTTP_404_NOT_FOUND)
-		if not start_date or not end_date:
-			return JSONResponse(content={"message": "start and end dates are required"}, status_code=status.HTTP_400_BAD_REQUEST)
-		if start_date>end_date:
-			return JSONResponse(content={"message": "start date should be less than end date"}, status_code=status.HTTP_400_BAD_REQUEST)
-		if sample_frequency.lower() not in ["daily", "weekly", "monthly"]:
-			return JSONResponse(content={"message": "sample_frequency should be daily, weekly or monthly"}, status_code=status.HTTP_400_BAD_REQUEST)
-		
-		# Get total and unique views and clicks sampled by daily/weekly/monthly between the given date range
-		response_data = get_activity(username, start_date, end_date, sample_frequency.lower(), db)
-		response_data = pd.DataFrame(response_data)
-		response_data = response_data.groupby("date").sum().reset_index()
-		# Get CTR for given date-time in dataframe
-		response_data["ctr"] = [0 if row["total_views"]==0 else round(row["total_clicks"]/row["total_views"]*100, 3) for index, row in response_data.iterrows()]
-		response_data = response_data.to_dict(orient="records")
-		response_data = json.dumps(response_data, default=str)
-		response_data = {"data": response_data}
-		response_data = json.loads(response_data["data"])
-		return JSONResponse(content=response_data, status_code=status.HTTP_200_OK)
 	except Exception as e:
 		return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)
 

@@ -47,11 +47,12 @@ async def get_user_profile_details(url:str, request:Request, db:session):
 	return resp_data, response_cookie
 
 
-async def save_click(link:str, profile, request:Request):
+async def save_click(link:str, profile:int, request:Request):
 	"""Function to save click information
 
 	Args:
 		link (str): Link clicked on
+		profile (int): Profile id for saving view for new cookie
 		request (Request): API request
 
 	Returns:

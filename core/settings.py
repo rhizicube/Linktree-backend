@@ -43,7 +43,7 @@ class Settings(BaseSettings):
 	POSTGRE_DB_USER: str = os.environ.get("POSTGRES_USER", "admin@rhizicube.ai")
 	POSTGRE_DB_PASS: str = os.environ.get("POSTGRES_PASSWORD", "1234")
 	POSTGRE_DB_HOST: str = os.environ.get("POSTGRES_HOST", "localhost")
-	POSTGRE_DB_NAME: str = os.environ.get("POSTGRES_DB", "linktreedb")
+	POSTGRE_DB_NAME: str = os.environ.get("POSTGRES_DB", "linktree_db")
 	POSTGRE_DB_PORT: int = int(os.environ.get("POSTGRES_PORT", "5432"))
 
 	# MongoDB connection
@@ -51,7 +51,7 @@ class Settings(BaseSettings):
 	MONGO_DB_USER: str = os.environ.get("MONGO_INITDB_ROOT_USERNAME", "admin@rhizicube.ai")
 	MONGO_DB_PASS: str = os.environ.get("MONGO_INITDB_ROOT_PASSWORD", "1234")
 	MONGO_DB_HOST: str = os.environ.get("MONGO_INITDB_ROOT_HOST", "localhost")
-	MONGO_DB_NAME: str = os.environ.get("MONGO_INITDB_DATABASE", "rhizicubedb")
+	MONGO_DB_NAME: str = os.environ.get("MONGO_INITDB_DATABASE", "linktree_db")
 	MONGO_DB_PORT: int = int(os.environ.get("MONGO_INITDB_ROOT_PORT", "27017"))
 
 	# Base directory
