@@ -225,3 +225,46 @@ async def get_location_activity(username: str, start_date: dt, end_date: dt, db:
 		return JSONResponse(content={"data": response_data}, status_code=status.HTTP_200_OK)
 	except Exception as e:
 		return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)
+
+
+@analytics_router.get("/getcountbysocialicon/")
+async def get_count_by_profile_social(username:str, start_date:dt=None, end_date:dt=None, db:session=Depends(get_db)):
+	"""API to get click counts of all links created by user
+
+	Args:
+		username (str): Username
+		start_date (dt): start time
+		end_date (dt): end time
+		db (session, optional): DB connection session for db functionalities. Defaults to Depends(get_db).
+
+	Returns:
+		dict: click count for every link created for a user
+	"""
+	try:
+		if start_date is None or end_date is None:
+			return JSONResponse(content={"message": "Start and end date range should be provided"}, status_code=status.HTTP_400_BAD_REQUEST)
+		# Raw SQL query to get all the links (id only) present for a user
+		profile_links = db.execute("SELECT Link.id FROM Link, Profile, Setting WHERE Profile.id = Setting.profile_id AND Link.setting_id = Setting.id AND Profile.username = :uname;", {"uname": username})
+		links = profile_links.mappings().all()
+		if len(links) == 0:
+			return JSONResponse(content={"message": "Links not created by user"}, status_code=status.HTTP_404_NOT_FOUND)
+
+		# Raw SQL query to get click count and link name for all the clicks recorded in clicksresample table between given date range for only the list of links queried above
+		click_count = db.execute('SELECT ClicksResample.click_count, Link.link_name FROM ClicksResample, Link WHERE Link.id = ClicksResample.link_id AND link_id in :link_list AND click_sampled_timestamp BETWEEN :start AND :end;', { 'link_list': tuple(x['id'] for x in links), "start": start_date, "end": end_date })
+		click_count = click_count.mappings().all()
+		if len(click_count) == 0:
+			return JSONResponse(content={"message": "Data not found for the given date range"}, status_code=status.HTTP_404_NOT_FOUND)
+		
+		click_count_df = pd.DataFrame(click_count)
+		# To get the total clicks count for each link
+		clicks_grouped_by_link = click_count_df.groupby([click_count_df.link_name])["click_count"].sum()
+		# TODO: To try sorting by counts in descending order
+		# clicks_grouped_by_link.sort_values('click_count', ascending=False, inplace=True)
+		print(clicks_grouped_by_link)
+		# Response formatting
+		clicks_response_data = {}
+		for index, row in clicks_grouped_by_link.items():
+			clicks_response_data[index] = row
+		return JSONResponse(content={"data": clicks_response_data}, status_code=status.HTTP_200_OK)
+	except Exception as e:
+		return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)

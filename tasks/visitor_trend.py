@@ -36,9 +36,10 @@ async def query_sample_click(resampled_views, start_time, end_time, db):
 	"""
 	resampled_clicks = []
 	for view in resampled_views:
-		view_clicks = await clicks.get_clicks_by_session_datetime_range(view.session_id, start_time, end_time)
+		view_clicks = await clicks.get_clicks_by_session_datetime_range(view["session_id"], start_time, end_time)
 		if len(view_clicks) == 0:
 			continue
+		view_id = views_resample.get_views_by_session(db, view["session_id"]).id
 		clicks_df = pd.DataFrame(view_clicks)
 		clicks_df['click_created'] = pd.to_datetime(clicks_df['click_created']) # To convert click_created format (string to datetime)
 		clicks_df["count"] = 1 # To calculate the total view counts
@@ -51,10 +52,11 @@ async def query_sample_click(resampled_views, start_time, end_time, db):
 			fieldnames = pivoted_data.columns
 			for index, row in pivoted_data.iterrows():
 				for l in fieldnames:
-					resampled_clicks.append({"click_count": int(row[l]), "click_sampled_timestamp": index.to_pydatetime(), "view_id": view.id, "link_id": links.get_link_by_tiny_url(l, db).id})
-	# The data analyzed for each hour for each unique session is inserted in bulk to the DB	
-	_clicks = clicks_resample.bulk_create_click(db, resampled_clicks)
-	print("Completed inserting clicks")
+					resampled_clicks.append({"click_count": int(row[l]), "click_sampled_timestamp": index.to_pydatetime(), "view_id": view_id, "link_id": links.get_link_by_tiny_url(l, db).id})
+	if len(resampled_clicks) > 0:
+		# The data analyzed for each hour for each unique session is inserted in bulk to the DB	
+		clicks_resample.bulk_create_click(db, resampled_clicks)
+		print("Completed inserting clicks")
 
 
 async def query_sample_view(profile, last_queried):
@@ -71,15 +73,15 @@ async def query_sample_view(profile, last_queried):
 	start_time = last_queried.get("profile_last_queried_timestamp", None)
 	end = dt.utcnow()-timedelta(hours=1)
 	end_time = dt.strftime(end.replace(minute=59, second=59), "%Y-%m-%dT%H:%M:%S") # Get the very last second of the previous hour
-	profile_views = await views.get_views_by_profile_datetime_range(profile.id, start_time, end_time)
+	profile_views = await views.get_views_by_profile_datetime_range(profile.id, None, end_time)
 	if len(profile_views) == 0:
 		print(f"No views to resample between time {start_time} and {end_time}")
 		db.close()
 		await close_mongo_connection()
 		return
 	# Update the last queried timestamp to end_time
-	last_queried["profile_last_queried_timestamp"] = profile_views[-1]["view_created"]
-	profiles.update_profile(db, profile.id, desc=json.dumps(last_queried))
+	last_queried["profile_last_queried_timestamp"] = end_time
+	profiles.update_profile(db, profile.id, desc=last_queried)
 	views_df = pd.DataFrame(profile_views)
 	views_df["location_ip"] = [x["ip"] for x in views_df["location"]] # To store the IP address separately
 	views_df['view_created'] = pd.to_datetime(views_df['view_created']) # To convert view_created format (string to datetime)
@@ -87,7 +89,13 @@ async def query_sample_view(profile, last_queried):
 	resampled_views = []
 	# For each unique session, the view counts for each IP address is calculated with an interval of 1 hour (60 minutes)
 	for s in views_df["session_id"].unique():
-		session_df = views_df[views_df["session_id"]==s]
+		try:
+			st = dt.strptime(start_time, "%Y-%m-%dT%H:%M:%S")
+		except Exception as e:
+			st = dt.strptime(start_time, "%Y-%m-%dT%H:%M:%S.%f")
+		session_df = views_df[(views_df["session_id"]==s) & (views_df["view_created"]>st)]
+		if session_df.empty:
+			continue
 		pivoted_data = session_df.pivot_table(index="view_created", values=["count"], columns="location_ip")
 		pivoted_data = pivoted_data.resample('60min').sum()
 		pivoted_data.columns=pivoted_data.columns.get_level_values(1)
@@ -96,9 +104,10 @@ async def query_sample_view(profile, last_queried):
 			for ip in fieldnames:
 				location = get_ip_location(ip)
 				resampled_views.append({"session_id": s, "device_type": session_df.iloc[0]["device"], "view_count": int(row[ip]), "view_location": location, "view_sampled_timestamp": index.to_pydatetime(), "profile": profile.id})
-	# The data analyzed for each hour for each unique session is inserted in bulk to the DB
-	inserted_views = views_resample.bulk_create_view(db, resampled_views)
-	await query_sample_click(inserted_views, start_time, end_time, db)
+	if len(resampled_views) > 0:
+		# The data analyzed for each hour for each unique session is inserted in bulk to the DB
+		views_resample.bulk_create_view(db, resampled_views)
+	await query_sample_click(profile_views, start_time, end_time, db)
 	db.close()
 	await close_mongo_connection()
 
@@ -113,6 +122,7 @@ def query_sample_view_clicks(profile, last_queried):
 		last_queried (dict): Information on the last queried and resampled timestamp
 	"""
 	async_to_sync(query_sample_view)(profile, last_queried)
+	# await query_sample_view(profile, last_queried)
 
 
 # @shared_task(bind=True,autoretry_for=(Exception,), retry_backoff=True, retry_kwargs={"max_retries": 5})
@@ -140,4 +150,3 @@ def save_visitor_sampled_data():
 			print("Celery not working")
 			query_sample_view_clicks(profile, last_queried)
 	db.close()
-

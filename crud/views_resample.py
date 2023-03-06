@@ -45,6 +45,18 @@ def get_views_by_profile_id(db:session, profile_id:int, skip:int=0, limit:int=10
 	"""
 	return db.query(ViewsResample).filter(ViewsResample.profile_id == profile_id).offset(skip).limit(limit).all()
 
+def get_views_by_session(db:session, session_id:str):
+	"""Function to get views for the given session id
+
+	Args:
+		db (session): DB connection session for ORM functionalities
+		session_id (str): session id
+
+	Returns:
+		orm query set: returns the queried views
+	"""
+	return db.query(ViewsResample).filter(ViewsResample.session_id == session_id).first()
+
 def create_view(db:session, view:ViewSchema):
 	"""Function to create view
 
