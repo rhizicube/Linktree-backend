@@ -128,6 +128,8 @@ async def create(username:str, request: Dict[Any, Any], db:session=Depends(get_d
 				link = LinkSchema(**link)
 				_link = links.create_link(db, link)
 				response_data["links"] = jsonable_encoder(_link)
+				if response_data["links"]["link_thumbnail"]:
+					response_data["links"]["link_thumbnail"] = "media" + response_data["links"]["link_thumbnail"].split("media")[-1]
 			# Create profile_social if present in request body
 			if request.get("profile_social", None) is not None:
 				link = request["profile_social"]
@@ -137,6 +139,8 @@ async def create(username:str, request: Dict[Any, Any], db:session=Depends(get_d
 				if "setting" not in response_data.keys():
 					response_data["setting"] = jsonable_encoder(_setting)
 				response_data["setting"]["profile_social"] = jsonable_encoder(_link)
+				if response_data["setting"]["profile_social"]["link_thumbnail"]:
+					response_data["setting"]["profile_social"]["link_thumbnail"] = "media" + response_data["setting"]["profile_social"]["link_thumbnail"].split("media")[-1]
 
 			# Response to contain the rows inserted to DB (to include primary keys)
 			return JSONResponse(status_code=status.HTTP_201_CREATED, content={"message":"Profile details saved", "data": response_data})
