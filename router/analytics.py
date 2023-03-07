@@ -247,7 +247,7 @@ async def get_count_by_profile_social(username:str, start_date:dt=None, end_date
 		profile_links = db.execute("SELECT Link.id FROM Link, Profile, Setting WHERE Profile.id = Setting.profile_id AND Link.setting_id = Setting.id AND Profile.username = :uname;", {"uname": username})
 		links = profile_links.mappings().all()
 		if len(links) == 0:
-			return JSONResponse(content={"message": "Links not created by user"}, status_code=status.HTTP_404_NOT_FOUND)
+			return JSONResponse(content={"message": "Social icons not created by user"}, status_code=status.HTTP_404_NOT_FOUND)
 
 		# Raw SQL query to get click count and link name for all the clicks recorded in clicksresample table between given date range for only the list of links queried above
 		click_count = db.execute('SELECT ClicksResample.click_count, Link.link_name FROM ClicksResample, Link WHERE Link.id = ClicksResample.link_id AND link_id in :link_list AND click_sampled_timestamp BETWEEN :start AND :end;', { 'link_list': tuple(x['id'] for x in links), "start": start_date, "end": end_date })

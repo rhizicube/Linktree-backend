@@ -110,13 +110,13 @@ async def get_user_profile(url:str, request:Request, db:session=Depends(get_db))
 			if "empty_profile" in resp_data["profile"]["profile_link"]:
 				resp_data["profile"]["profile_link"] = ""
 			
-			if resp_data["profile"]["profile_image_path"] and os.path.exists(resp_data["profile"]["profile_image_path"]):
+			if resp_data["profile"]["profile_image_path"]: # and os.path.exists(resp_data["profile"]["profile_image_path"]):
 				resp_data["profile"]["profile_image_path"] = "media" + resp_data["profile"]["profile_image_path"].split("media")[-1]
 			for link in resp_data["link"]:
-				if link["link_thumbnail"] and os.path.exists(link["link_thumbnail"]):
+				if link["link_thumbnail"]: # and os.path.exists(link["link_thumbnail"]):
 					link["link_thumbnail"] = "media" + link["link_thumbnail"].split("media")[-1]
 			for icon in resp_data["setting"]["profile_social"]:
-				if icon["link_thumbnail"] and os.path.exists(icon["link_thumbnail"]):
+				if icon["link_thumbnail"]: # and os.path.exists(icon["link_thumbnail"]):
 					icon["link_thumbnail"] = "media" + icon["link_thumbnail"].split("media")[-1]
 			response = JSONResponse(content={"data": resp_data}, status_code=status.HTTP_200_OK)
 			if response_cookie:

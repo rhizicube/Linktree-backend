@@ -10,6 +10,7 @@ class LinkSchema(BaseModel):
 	link_name: str
 	link_url: str
 	link_enable:Optional[bool]=True
+	link_thumbnail:Optional[str]=None
 	profile: Optional[int]=None
 	setting: Optional[int]=None
 
@@ -28,6 +29,7 @@ class ResponseLink(GenericModel, Generic[T]):
 class LinkUpdateSchema(BaseModel):
 	link_name: Optional[str]=None
 	link_url: Optional[str]=None
+	link_thumbnail:Optional[str]=None
 	link_enable: Optional[bool]=None
 
 class UpdateLink(BaseModel):

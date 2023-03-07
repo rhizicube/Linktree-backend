@@ -85,7 +85,7 @@ class Settings(BaseSettings):
 	)
 
 	# Cookie expiration
-	COOKIE_EXPIRATION: int = int(os.getenv("COOKIE_EXPIRATION", "100"))
+	COOKIE_EXPIRATION: int = int(os.getenv("COOKIE_EXPIRATION", "3600"))
 
 	
 

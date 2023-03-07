@@ -92,7 +92,7 @@ def create_link(db:session, link:LinkSchema):
 		orm query set: returns created link
 	"""
 	short_url = create_little_link(db)
-	_link = Link(link_name=link.link_name, link_url=link.link_url, link_enable=link.link_enable, link_tiny=short_url, profile_id=link.profile, setting_id=link.setting)
+	_link = Link(link_name=link.link_name, link_url=link.link_url, link_enable=link.link_enable, link_tiny=short_url, profile_id=link.profile, setting_id=link.setting, link_thumbnail=os.path.join(settings.BASE_DIR, link.link_thumbnail))
 	db.add(_link)
 	db.commit()
 	db.refresh(_link)
@@ -146,7 +146,7 @@ def delete_link_by_id(db:session, id:int):
 		raise HTTPException(status_code=400, detail="Link not found")
 
 
-def update_link(db:session, id:int, link_enable:bool=None, link_name:str=None, link_url:str=None):
+def update_link(db:session, id:int, link_enable:bool=None, link_name:str=None, link_url:str=None, link_thumbnail:str=None):
 	"""Function to update link
 
 	Args:
@@ -168,6 +168,9 @@ def update_link(db:session, id:int, link_enable:bool=None, link_name:str=None, l
 	if link_url is not None:
 		_link.link_url = link_url
 		_link.link_tiny = create_little_link(db)
+	if link_thumbnail is not None:
+		img_path = os.path.join(settings.BASE_DIR, link_thumbnail)
+		_link.link_thumbnail = img_path
 	
 	db.commit()
 	db.refresh(_link)

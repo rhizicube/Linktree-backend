@@ -57,7 +57,10 @@ async def get(username:str, db:session=Depends(get_db)):
 			if resp_data["profile"]["profile_image_path"] and os.path.exists(resp_data["profile"]["profile_image_path"]):
 				resp_data["profile"]["profile_image_path"] = "media" + resp_data["profile"]["profile_image_path"].split("media")[-1]
 			for link in resp_data["link"]:
-				if link["link_thumbnail"] and os.path.exists(link["link_thumbnail"]):
+				if link["link_thumbnail"]: # and os.path.exists(link["link_thumbnail"]):
+					link["link_thumbnail"] = "media" + link["link_thumbnail"].split("media")[-1]
+			for link in resp_data["settings"]["profile_social"]:
+				if link["link_thumbnail"]: # and os.path.exists(link["link_thumbnail"]):
 					link["link_thumbnail"] = "media" + link["link_thumbnail"].split("media")[-1]
 
 			# "empty_profile" added to identify user hasnt updated details other than their profile image, so remove it in the response
@@ -172,7 +175,7 @@ async def update(username:str, request: Dict[Any, Any], link_id:int=None, db:ses
 			# If a link is to be updated
 			if link_id is not None and (request.get("link", None) is not None or request.get("profile_social", None) is not None):
 				link_request = request["link"] if request.get("link", None) is not None else request["profile_social"] 
-				_link = links.update_link(db, link_id, link_request.get("link_enable", None), link_request.get("link_name", None), link_request.get("link_url", None))
+				_link = links.update_link(db, link_id, link_request.get("link_enable", None), link_request.get("link_name", None), link_request.get("link_url", None), link_request.get("link_thumbnail", None))
 			return JSONResponse(status_code=status.HTTP_200_OK, content={"message":"Profile details updated"})
 		else:
 			return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content={"message":"Username is required"})
