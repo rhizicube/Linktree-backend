@@ -6,6 +6,7 @@ from router import profile, link, user_profile, setting, profileDetails, analyti
 from db_connect.setup import connect_to_mongo, close_mongo_connection
 from celery_config.celery_utils import create_celery
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 
 models.PostgreBase.metadata.create_all(bind=postgre_engine)
 
@@ -17,10 +18,7 @@ def include_routers():
 	main_router.include_router(setting.setting_router, prefix="/v1.0/api/settings", tags=["setting"])
 	main_router.include_router(user_profile.router, prefix="/v1.0/api", tags=["Visitor"])
 	main_router.include_router(profileDetails.profile_detail_router, prefix='/v1.0/api/profile', tags=["User"])
-	# main_router.include_router(view.view_router, prefix='/v1.0/api/views', tags=["View"])
-	# main_router.include_router(click.click_router, prefix='/v1.0/api/clicks', tags=["Click"])
 	main_router.include_router(analytics.analytics_router, prefix='/v1.0/analytics', tags=["Analytics"])
-	# main_router.include_router(click_resample.click_router, prefix='/v1.0/api/clicksresample', tags=["ClickResample"])
 
 
 def create_app() -> FastAPI:
@@ -46,6 +44,8 @@ app.add_middleware(
 	allow_methods=["*"],
 	allow_headers=["*"],
 )
+
+app.add_middleware(GZipMiddleware, minimum_size=500)
 
 celery = app.celery_app
 
