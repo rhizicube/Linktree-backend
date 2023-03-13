@@ -17,7 +17,7 @@ async def create_cookie_id() -> str:
 	mongoDBConnection = mongoDB.database
 	short_url_length = 25
 	distinct_sessions = await mongoDBConnection["views"].distinct("session_id")
-	print(distinct_sessions)
+	# print(distinct_sessions)
 	while True:
 		res = ''.join(secrets.choice(string.ascii_uppercase + string.digits) for i in range(short_url_length))
 		if str(res) not in distinct_sessions:
@@ -72,7 +72,7 @@ def get_client_details(request) -> tuple:
 	else:
 		device_type = "other"
 
-	client_host = request.client.host
+	client_host = request.headers.get("x-forwarded-for", request.client.host)
 	if client_host == "127.0.0.1":
 		# Local testing
 		client_host = urllib.request.urlopen('https://ident.me').read().decode('utf8')
