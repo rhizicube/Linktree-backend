@@ -9,7 +9,7 @@ from fastapi.encoders import jsonable_encoder
 from schemas.links import LinkSchema
 from schemas.settings import SettingSchema
 from schemas.profiles import ProfileSchema
-import os
+import os, base64
 
 from db_connect.setup import get_db
 
@@ -56,13 +56,22 @@ async def get(username:str, db:session=Depends(get_db)):
 			# Return profile image and link thumbnail paths from "media/"
 			if resp_data["profile"]["profile_image_path"] and os.path.exists(resp_data["profile"]["profile_image_path"]):
 				resp_data["profile"]["profile_image_path"] = "media" + resp_data["profile"]["profile_image_path"].split("media")[-1]
+				with open(resp_data["profile"]["profile_image_path"], "rb") as image_file:
+					resp_data["profile"]["profile_image_file"] = str(base64.b64encode(image_file.read()))
+			else:
+				resp_data["profile"]["profile_image_path"] = None
 			for link in resp_data["link"]:
-				if link["link_thumbnail"]: # and os.path.exists(link["link_thumbnail"]):
+				if link["link_thumbnail"] and os.path.exists(link["link_thumbnail"]):
 					link["link_thumbnail"] = "media" + link["link_thumbnail"].split("media")[-1]
+					with open(link["link_thumbnail"], "rb") as image_file:
+						link["link_thumbnail_file"] = str(base64.b64encode(image_file.read()))
+				else:
+					link["link_thumbnail"] = None
 			for link in resp_data["settings"]["profile_social"]:
-				if link["link_thumbnail"]: # and os.path.exists(link["link_thumbnail"]):
+				if link["link_thumbnail"] and os.path.exists(link["link_thumbnail"]):
 					link["link_thumbnail"] = "media" + link["link_thumbnail"].split("media")[-1]
-
+				else:
+					link["link_thumbnail"] = None
 			# "empty_profile" added to identify user hasnt updated details other than their profile image, so remove it in the response
 			if "empty_profile" in resp_data["profile"]["profile_link"]:
 				resp_data["profile"]["profile_link"] = ""
