@@ -4,7 +4,7 @@ from sqlalchemy.orm import session
 import crud.profiles as profiles, crud.links as links, crud.settings as settings, crud.views as views, crud.clicks as clicks
 from utilities.views import create_cookie_id, get_client_details
 from fastapi.encoders import jsonable_encoder
-import os, base64
+import os
 from core.settings import settings as core_settings
 
 from db_connect.setup import get_db
@@ -112,15 +112,11 @@ async def get_user_profile(url:str, request:Request, db:session=Depends(get_db))
 			
 			if resp_data["profile"]["profile_image_path"] and os.path.exists(resp_data["profile"]["profile_image_path"]):
 				resp_data["profile"]["profile_image_path"] = "media" + resp_data["profile"]["profile_image_path"].split("media")[-1]
-				with open(resp_data["profile"]["profile_image_path"], "rb") as image_file:
-					resp_data["profile"]["profile_image_file"] = str(base64.b64encode(image_file.read()))
 			else:
 				resp_data["profile"]["profile_image_path"] = None
 			for link in resp_data["link"]:
 				if link["link_thumbnail"] and os.path.exists(link["link_thumbnail"]):
 					link["link_thumbnail"] = "media" + link["link_thumbnail"].split("media")[-1]
-					with open(link["link_thumbnail"], "rb") as image_file:
-						link["link_thumbnail_file"] = str(base64.b64encode(image_file.read()))
 				else:
 					link["link_thumbnail"] = None
 			for icon in resp_data["setting"]["profile_social"]:
