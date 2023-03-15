@@ -157,6 +157,7 @@ def update_link(db:session, id:int, link_enable:bool=None, link_name:str=None, l
 		link_enable (bool, optional): Enable flag. Defaults to None.
 		link_name (str, optional): Link name. Defaults to None.
 		link_url (str, optional): Link url. Defaults to None.
+		link_thumbnail (str, optional): Link thumbnail path. Defaults to None.
 
 	Returns:
 		orm query set: returns updated link
