@@ -84,6 +84,9 @@ class Settings(BaseSettings):
 		Queue("analytics"),
 	)
 
+	# Cookie expiration
+	COOKIE_EXPIRATION: int = int(os.getenv("COOKIE_EXPIRATION", "3600"))
+
 	
 
 settings = Settings()

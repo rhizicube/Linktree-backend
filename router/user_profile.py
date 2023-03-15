@@ -5,6 +5,7 @@ import crud.profiles as profiles, crud.links as links, crud.settings as settings
 from utilities.views import create_cookie_id, get_client_details
 from fastapi.encoders import jsonable_encoder
 import os
+from core.settings import settings as core_settings
 
 from db_connect.setup import get_db
 
@@ -99,7 +100,7 @@ async def get_user_profile(url:str, request:Request, db:session=Depends(get_db))
 			response_cookie = await save_click(url, link_to_redirect.profile_id, request)
 			response = RedirectResponse(link_to_redirect.link_url)
 			if response_cookie:
-				response.set_cookie(key="linktree_visitor", value=response_cookie, expires=100)
+				response.set_cookie(key="linktree_visitor", value=response_cookie, expires=core_settings.COOKIE_EXPIRATION)
 			return response
 		else:
 			# given URL is a custom link. All profile details (profile, links, settings) linked to the custom link is sent back as response
@@ -111,12 +112,21 @@ async def get_user_profile(url:str, request:Request, db:session=Depends(get_db))
 			
 			if resp_data["profile"]["profile_image_path"] and os.path.exists(resp_data["profile"]["profile_image_path"]):
 				resp_data["profile"]["profile_image_path"] = "media" + resp_data["profile"]["profile_image_path"].split("media")[-1]
+			else:
+				resp_data["profile"]["profile_image_path"] = None
 			for link in resp_data["link"]:
 				if link["link_thumbnail"] and os.path.exists(link["link_thumbnail"]):
 					link["link_thumbnail"] = "media" + link["link_thumbnail"].split("media")[-1]
+				else:
+					link["link_thumbnail"] = None
+			for icon in resp_data["setting"]["profile_social"]:
+				if icon["link_thumbnail"] and os.path.exists(icon["link_thumbnail"]):
+					icon["link_thumbnail"] = "media" + icon["link_thumbnail"].split("media")[-1]
+				else:
+					link["link_thumbnail"] = None
 			response = JSONResponse(content={"data": resp_data}, status_code=status.HTTP_200_OK)
 			if response_cookie:
-				response.set_cookie(key="linktree_visitor", value=response_cookie, expires=100)
+				response.set_cookie(key="linktree_visitor", value=response_cookie, expires=core_settings.COOKIE_EXPIRATION)
 			return response
 	except Exception as e:
 		return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST)
