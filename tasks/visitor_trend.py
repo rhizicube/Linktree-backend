@@ -89,11 +89,14 @@ async def query_sample_view(profile, last_queried):
 	resampled_views = []
 	# For each unique session, the view counts for each IP address is calculated with an interval of 1 hour (60 minutes)
 	for s in views_df["session_id"].unique():
-		try:
-			st = dt.strptime(start_time, "%Y-%m-%dT%H:%M:%S")
-		except Exception as e:
-			st = dt.strptime(start_time, "%Y-%m-%dT%H:%M:%S.%f")
-		session_df = views_df[(views_df["session_id"]==s) & (views_df["view_created"]>st)]
+		if start_time:
+			try:
+				st = dt.strptime(start_time, "%Y-%m-%dT%H:%M:%S")
+			except Exception as e:
+				st = dt.strptime(start_time, "%Y-%m-%dT%H:%M:%S.%f")
+			session_df = views_df[(views_df["session_id"]==s) & (views_df["view_created"]>st)]
+		else:
+			session_df = views_df[views_df["session_id"]==s]
 		if session_df.empty:
 			continue
 		pivoted_data = session_df.pivot_table(index="view_created", values=["count"], columns="location_ip")
